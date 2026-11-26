@@ -1,0 +1,4591 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>סימולטור עזרה ראשונה (מע"ר) — עצירת דימומים ואנטומיה</title>
+<style>
+  :root {
+    --bg-main: #090f1d;
+    --bg-panel: #111a2e;
+    --bg-card: #17233c;
+    --bg-card-hover: #1e2e4f;
+    --border: rgba(148, 163, 184, 0.16);
+    --border-bright: rgba(56, 189, 248, 0.45);
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --accent: #38bdf8;
+    --accent-dark: #0284c7;
+    --emerald: #10b981;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --crimson: #dc2626;
+    --purple: #a78bfa;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: "Segoe UI", "Heebo", "Assistant", "Rubik", Arial, sans-serif;
+    background: radial-gradient(circle at top center, #13203b 0%, var(--bg-main) 65%);
+    color: var(--text-main);
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.45;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+  ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.5); }
+
+  /* Top Navigation Bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 18px;
+    background: rgba(13, 21, 38, 0.94);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #ef4444, #991b1b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+    flex-shrink: 0;
+  }
+
+  .brand-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+    color: #fff;
+  }
+
+  .brand-sub {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+  }
+
+  .topbar-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .segmented {
+    display: inline-flex;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .segmented button {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .segmented button:hover { color: #fff; }
+
+  .segmented button.active {
+    background: linear-gradient(135deg, var(--accent-dark), #0369a1);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(2, 132, 199, 0.4);
+  }
+
+  .segmented button.active-practice {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(217, 119, 6, 0.4);
+  }
+
+  select.scenario-select {
+    background: rgba(15, 23, 42, 0.9);
+    color: #fff;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 7px 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+  }
+  select.scenario-select:focus { border-color: var(--accent); }
+
+  .icon-btn {
+    background: rgba(30, 41, 59, 0.85);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 6px 11px;
+    border-radius: 9px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: inherit;
+    transition: all 0.18s;
+  }
+
+  .icon-btn:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-bright);
+  }
+
+  .icon-btn.active-toggle {
+    background: rgba(56, 189, 248, 0.18);
+    border-color: var(--accent);
+    color: #7dd3fc;
+  }
+
+  .icon-btn.danger-btn {
+    background: rgba(239, 68, 68, 0.14);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+  }
+  .icon-btn.danger-btn:hover { background: rgba(239, 68, 68, 0.28); color: #fff; }
+
+  /* SABCDE Guided Strip & Patient Speech */
+  .protocol-bar {
+    background: linear-gradient(90deg, rgba(17, 26, 46, 0.95), rgba(23, 35, 60, 0.95));
+    border-bottom: 1px solid var(--border);
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .sabcde-steps {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .s-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    transition: all 0.25s;
+    cursor: pointer;
+  }
+
+  .s-pill .letter {
+    width: 21px;
+    height: 21px;
+    border-radius: 50%;
+    background: rgba(148, 163, 184, 0.2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.76rem;
+    font-weight: 800;
+  }
+
+  .s-pill.current {
+    background: rgba(56, 189, 248, 0.16);
+    border-color: var(--accent);
+    color: #e0f2fe;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+  }
+  .s-pill.current .letter { background: var(--accent); color: #082f49; }
+
+  .s-pill.done {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.45);
+    color: #a7f3d0;
+  }
+  .s-pill.done .letter { background: var(--emerald); color: #022c22; }
+
+  .guidance-box {
+    flex: 1;
+    min-width: 280px;
+    background: rgba(14, 165, 233, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 10px;
+    padding: 8px 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .guidance-box.practice-mode {
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.32);
+  }
+
+  .guidance-text {
+    font-size: 0.84rem;
+    color: #e2e8f0;
+  }
+  .guidance-text strong { color: #7dd3fc; }
+  .guidance-box.practice-mode .guidance-text strong { color: #fcd34d; }
+
+  .patient-bubble {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    max-width: 340px;
+  }
+
+  .patient-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+  }
+
+  .patient-quote {
+    color: #cbd5e1;
+    font-style: italic;
+  }
+
+  /* Main 3-Column Workspace (RTL: Col 1 = Right Toolkit, Col 2 = Center Canvas, Col 3 = Left Monitor) */
+  .workspace {
+    display: grid;
+    grid-template-columns: 275px minmax(480px, 1fr) 335px;
+    gap: 14px;
+    padding: 14px 18px 20px;
+    max-width: 1680px;
+    margin: 0 auto;
+    align-items: start;
+  }
+
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 11px 14px;
+    background: rgba(15, 23, 42, 0.72);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .panel-title {
+    font-size: 0.86rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #f8fafc;
+    white-space: nowrap;
+  }
+
+  .panel-badge {
+    font-size: 0.69rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: rgba(56, 189, 248, 0.14);
+    color: #7dd3fc;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    white-space: nowrap;
+  }
+
+  /* Toolkit Panel */
+  .toolkit-body {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .tool-section-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .tool-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .tool-btn {
+    width: 100%;
+    text-align: right;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 11px;
+    color: var(--text-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: inherit;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .tool-btn:hover:not(:disabled) {
+    background: var(--bg-card-hover);
+    border-color: rgba(148, 163, 184, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .tool-btn.active {
+    background: rgba(16, 185, 129, 0.14);
+    border-color: rgba(16, 185, 129, 0.55);
+  }
+
+  .tool-btn.selected-mode {
+    background: rgba(56, 189, 248, 0.16);
+    border-color: var(--accent);
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.28);
+  }
+
+  .tool-btn.recommended {
+    border-color: var(--accent);
+    animation: guidePulse 1.8s infinite;
+  }
+
+  @keyframes guidePulse {
+    0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.55); }
+    70% { box-shadow: 0 0 0 8px rgba(56, 189, 248, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+  }
+
+  .tool-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .tool-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .tool-name {
+    font-size: 0.84rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .tool-desc {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  .tool-status {
+    font-size: 0.67rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 99px;
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+    white-space: nowrap;
+  }
+
+  .tool-status.warn {
+    background: rgba(245, 158, 11, 0.22);
+    color: #fcd34d;
+  }
+
+  .tool-status.call {
+    background: rgba(239, 68, 68, 0.22);
+    color: #fca5a5;
+  }
+
+  /* Pressure Meter inside Direct Pressure Action */
+  .pressure-bar-wrap {
+    margin-top: 6px;
+    height: 5px;
+    background: rgba(15, 23, 42, 0.9);
+    border-radius: 99px;
+    overflow: hidden;
+    display: none;
+  }
+  .pressure-bar-wrap.visible { display: block; }
+  .pressure-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #f59e0b, #10b981);
+    transition: width 0.12s linear;
+  }
+
+  .finish-btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(16, 185, 129, 0.5);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.22), rgba(5, 150, 105, 0.35));
+    color: #d1fae5;
+    font-weight: 800;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .finish-btn:hover {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+  }
+
+  /* Center Anatomical Canvas Stage */
+  .stage-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .canvas-wrapper {
+    position: relative;
+    background: #080d18;
+    width: 100%;
+    aspect-ratio: 16 / 9.4;
+    min-height: 390px;
+    overflow: hidden;
+    user-select: none;
+    touch-action: none;
+  }
+
+  canvas#anatomyCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: crosshair;
+  }
+
+  .canvas-overlay-top {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .canvas-toolbar {
+    display: flex;
+    gap: 6px;
+    pointer-events: auto;
+    flex-wrap: wrap;
+  }
+
+  .canvas-chip {
+    background: rgba(11, 18, 34, 0.86);
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    color: #e2e8f0;
+    font-size: 0.74rem;
+    font-weight: 600;
+    padding: 5px 9px;
+    border-radius: 8px;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    font-family: inherit;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .canvas-chip:hover { border-color: var(--accent); color: #fff; }
+  .canvas-chip.on { background: rgba(56, 189, 248, 0.22); border-color: var(--accent); color: #bae6fd; }
+
+  .bleed-status-pill {
+    pointer-events: auto;
+    padding: 5px 11px;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    backdrop-filter: blur(6px);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bleed-status-pill.active-bleed {
+    background: rgba(220, 38, 38, 0.25);
+    border: 1px solid rgba(239, 68, 68, 0.6);
+    color: #fecaca;
+  }
+  .bleed-status-pill.slowing {
+    background: rgba(245, 158, 11, 0.22);
+    border: 1px solid rgba(245, 158, 11, 0.55);
+    color: #fde68a;
+  }
+  .bleed-status-pill.controlled {
+    background: rgba(16, 185, 129, 0.24);
+    border: 1px solid rgba(16, 185, 129, 0.6);
+    color: #a7f3d0;
+  }
+
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: blinkDot 0.9s infinite;
+  }
+  @keyframes blinkDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.75); }
+  }
+
+  /* Interactive CAT Control Bar Floating at Bottom of Canvas */
+  .cat-control-bar {
+    position: absolute;
+    bottom: 10px;
+    right: 12px;
+    left: 12px;
+    background: rgba(12, 19, 36, 0.94);
+    border: 1px solid rgba(245, 158, 11, 0.55);
+    border-radius: 10px;
+    padding: 9px 13px;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+    z-index: 15;
+  }
+  .cat-control-bar.visible { display: flex; }
+
+  .cat-controls-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .cat-btn {
+    background: #1e293b;
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    color: #fef3c7;
+    padding: 5px 11px;
+    border-radius: 7px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .cat-btn:hover:not(:disabled) { background: #d97706; color: #fff; }
+  .cat-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .cat-btn.time-btn { border-color: rgba(56, 189, 248, 0.55); color: #bae6fd; }
+  .cat-btn.time-btn:hover:not(:disabled) { background: #0284c7; color: #fff; }
+  .cat-btn.time-btn.stamped { background: rgba(16, 185, 129, 0.25); border-color: var(--emerald); color: #a7f3d0; }
+
+  /* Toast Feedback on Canvas */
+  .canvas-toast {
+    position: absolute;
+    top: 52px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid var(--accent);
+    color: #f8fafc;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    max-width: 88%;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s;
+    z-index: 20;
+  }
+  .canvas-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .canvas-toast.toast-warn { border-color: var(--amber); background: rgba(41, 25, 8, 0.96); color: #fef3c7; }
+  .canvas-toast.toast-err { border-color: var(--red); background: rgba(45, 11, 15, 0.96); color: #fecaca; }
+  .canvas-toast.toast-ok { border-color: var(--emerald); background: rgba(6, 38, 28, 0.96); color: #d1fae5; }
+
+  /* Hover Tooltip on Canvas */
+  .anatomy-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(9, 15, 29, 0.94);
+    border: 1px solid var(--accent);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+    display: none;
+    z-index: 18;
+  }
+
+  /* Anatomical Layer Explorer Bar & Info Card */
+  .layers-strip {
+    padding: 10px 13px;
+    background: rgba(15, 23, 42, 0.65);
+    border-top: 1px solid var(--border);
+  }
+
+  .layers-strip-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .layer-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .layer-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 99px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: #e2e8f0;
+    font-size: 0.73rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.16s;
+  }
+  .layer-pill:hover, .layer-pill.selected {
+    border-color: var(--accent);
+    background: rgba(56, 189, 248, 0.18);
+    color: #fff;
+  }
+
+  .layer-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.4);
+  }
+
+  /* Anatomical Info Card */
+  .anatomy-card {
+    background: var(--bg-panel);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: var(--radius);
+    padding: 13px 15px;
+    display: none;
+    animation: fadeIn 0.2s ease;
+  }
+  .anatomy-card.visible { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .anatomy-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .anatomy-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #7dd3fc;
+  }
+
+  .anatomy-card-latin {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .anatomy-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .anatomy-fact {
+    background: rgba(15, 23, 42, 0.72);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.78rem;
+  }
+
+  .anatomy-fact h5 {
+    font-size: 0.72rem;
+    color: var(--accent);
+    margin-bottom: 3px;
+  }
+
+  /* Cross-Section Inset Panel */
+  .cross-section-box {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    display: none;
+  }
+  .cross-section-box.visible { display: block; }
+
+  /* Right/Left Vitals Monitor Panel */
+  .monitor-body {
+    padding: 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ecg-box {
+    background: #050a14;
+    border: 1px solid rgba(16, 185, 129, 0.28);
+    border-radius: 10px;
+    padding: 6px 8px;
+    position: relative;
+  }
+
+  .ecg-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: #34d399;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+
+  canvas#ecgCanvas {
+    width: 100%;
+    height: 54px;
+    display: block;
+  }
+
+  .blood-loss-card {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 11px;
+  }
+
+  .blood-loss-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+
+  .shock-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-weight: 800;
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+  }
+  .shock-badge.stage1 { background: rgba(56, 189, 248, 0.2); color: #7dd3fc; }
+  .shock-badge.stage2 { background: rgba(245, 158, 11, 0.24); color: #fcd34d; }
+  .shock-badge.stage3 { background: rgba(249, 115, 22, 0.28); color: #fdba74; }
+  .shock-badge.stage4 { background: rgba(239, 68, 68, 0.3); color: #fca5a5; animation: blinkDot 1s infinite; }
+
+  .loss-bar-bg {
+    height: 8px;
+    background: #1e293b;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .loss-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #f59e0b, #ef4444, #991b1b);
+    transition: width 0.25s;
+  }
+
+  .vital-card {
+    background: #0c1425;
+    border: 1px solid var(--border);
+    border-right: 3px solid var(--emerald);
+    border-radius: 10px;
+    padding: 9px 11px;
+    transition: border-color 0.3s, background 0.3s;
+  }
+
+  .vital-card.warn { border-right-color: var(--amber); background: rgba(36, 26, 12, 0.65); }
+  .vital-card.crit { border-right-color: var(--red); background: rgba(45, 13, 19, 0.72); }
+
+  .vital-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .vital-label {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+
+  .vital-value-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+  }
+
+  .vital-value {
+    font-size: 1.45rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+
+  .vital-unit {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+
+  .vital-trend {
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+
+  .vital-why {
+    margin-top: 6px;
+    padding: 5px 8px;
+    background: rgba(15, 23, 42, 0.75);
+    border-radius: 7px;
+    font-size: 0.73rem;
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+  }
+
+  .vital-why span.why-tag {
+    color: var(--accent);
+    font-weight: 800;
+    margin-left: 4px;
+  }
+
+  .avpu-row {
+    display: flex;
+    gap: 5px;
+    margin-top: 6px;
+  }
+
+  .avpu-pill {
+    flex: 1;
+    text-align: center;
+    padding: 4px 2px;
+    border-radius: 7px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  .avpu-pill.active-A { background: rgba(16, 185, 129, 0.25); border-color: var(--emerald); color: #6ee7b7; }
+  .avpu-pill.active-V { background: rgba(245, 158, 11, 0.25); border-color: var(--amber); color: #fcd34d; }
+  .avpu-pill.active-P { background: rgba(249, 115, 22, 0.3); border-color: #f97316; color: #fdba74; }
+  .avpu-pill.active-U { background: rgba(239, 68, 68, 0.35); border-color: var(--red); color: #fecaca; }
+
+  .skin-signs {
+    font-size: 0.73rem;
+    color: var(--text-muted);
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  /* Event Log */
+  .event-log {
+    max-height: 118px;
+    overflow-y: auto;
+    background: rgba(8, 13, 24, 0.85);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 9px;
+    font-size: 0.72rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .log-item {
+    display: flex;
+    gap: 6px;
+    color: #cbd5e1;
+    border-bottom: 1px dashed rgba(148, 163, 184, 0.1);
+    padding-bottom: 3px;
+  }
+  .log-time { color: var(--text-dim); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .log-item.good { color: #6ee7b7; }
+  .log-item.warn { color: #fcd34d; }
+  .log-item.bad { color: #fca5a5; }
+
+  /* Modals (101 Dispatch & Medical Debrief) */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(3, 7, 18, 0.82);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+  }
+  .modal-backdrop.open { display: flex; }
+
+  .modal-box {
+    background: #10192d;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 16px;
+    max-width: 760px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+    animation: fadeIn 0.22s ease;
+  }
+
+  .modal-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(15, 23, 42, 0.8);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+
+  .modal-content {
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .debrief-hero {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 15px;
+    flex-wrap: wrap;
+  }
+
+  .score-ring {
+    width: 92px;
+    height: 92px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 5px solid var(--emerald);
+    background: rgba(16, 185, 129, 0.1);
+    flex-shrink: 0;
+  }
+  .score-ring.mid { border-color: var(--amber); background: rgba(245, 158, 11, 0.1); }
+  .score-ring.low { border-color: var(--red); background: rgba(239, 68, 68, 0.12); }
+
+  .score-num { font-size: 1.75rem; font-weight: 900; line-height: 1; }
+  .score-sub { font-size: 0.7rem; color: var(--text-muted); }
+
+  .debrief-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .d-metric {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 9px;
+    text-align: center;
+  }
+  .d-metric-label { font-size: 0.72rem; color: var(--text-muted); }
+  .d-metric-val { font-size: 1.05rem; font-weight: 800; margin-top: 2px; }
+
+  .check-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .check-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.83rem;
+  }
+  .check-row.pass { border-right: 3px solid var(--emerald); }
+  .check-row.partial { border-right: 3px solid var(--amber); }
+  .check-row.fail { border-right: 3px solid var(--red); }
+
+  .check-icon { font-size: 1.1rem; line-height: 1.2; flex-shrink: 0; }
+  .check-detail { font-size: 0.76rem; color: var(--text-muted); margin-top: 2px; }
+
+  .golden-rules {
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.81rem;
+  }
+  .golden-rules ul { padding-right: 18px; margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  .primary-btn {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: #fff;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 9px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .primary-btn:hover { filter: brightness(1.12); }
+
+  /* Responsive */
+  @media (max-width: 1180px) {
+    .workspace {
+      grid-template-columns: 260px 1fr;
+    }
+    .monitor-panel {
+      grid-column: 1 / -1;
+    }
+    .monitor-body {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .ecg-box, .blood-loss-card, .event-log {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 820px) {
+    .workspace {
+      grid-template-columns: 1fr;
+    }
+    .anatomy-grid { grid-template-columns: 1fr; }
+    .debrief-metrics { grid-template-columns: repeat(2, 1fr); }
+    .monitor-body { display: flex; flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-logo" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.7" stroke-linecap="round">
+        <path d="M12 4v16M4 12h16"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-title">סימולטור עזרה ראשונה — רמת מע"ר</div>
+      <div class="brand-sub">אנטומיה חיה, פיזיקת דימום ופרוטוקול SABCDE</div>
+    </div>
+  </div>
+
+  <div class="topbar-controls">
+    <div class="segmented" role="group" aria-label="מצב סימולציה">
+      <button id="btnModeLearn" class="active" onclick="setMode('learn')">🎓 מצב לימוד מונחה</button>
+      <button id="btnModePractice" onclick="setMode('practice')">🩺 מצב תרגול + תחקיר</button>
+    </div>
+
+    <select id="scenarioSelect" class="scenario-select" onchange="changeScenario(this.value)" title="בחר סוג פציעה">
+      <option value="arterial">תרחיש 1: דימום עורקי עמוק (עורק רדיאלי)</option>
+      <option value="venous">תרחיש 2: דימום ורידי עמוק באמה</option>
+      <option value="mixed">תרחיש 3: פגיעה משולבת (עורק + וריד)</option>
+    </select>
+
+    <button id="btnPause" class="icon-btn" onclick="togglePause()">⏸ השהה</button>
+    <button id="btnSpeed" class="icon-btn" onclick="cycleSpeed()">⚡ ×1</button>
+    <button id="btnSound" class="icon-btn" onclick="toggleSound()">🔇 צליל מוניטור</button>
+    <button class="icon-btn danger-btn" onclick="resetSimulation()">↻ התחל מחדש</button>
+  </div>
+</header>
+
+<!-- SABCDE PROTOCOL & PATIENT SPEECH BAR -->
+<section class="protocol-bar">
+  <div class="sabcde-steps" id="sabcdeSteps">
+    <div class="s-pill current" data-step="S" onclick="explainProtocolStep('S')"><span class="letter">S</span>בטיחות</div>
+    <div class="s-pill" data-step="A" onclick="explainProtocolStep('A')"><span class="letter">A</span>נתיב אוויר</div>
+    <div class="s-pill" data-step="B" onclick="explainProtocolStep('B')"><span class="letter">B</span>נשימה</div>
+    <div class="s-pill" data-step="C" onclick="explainProtocolStep('C')"><span class="letter">C</span>דימום ודם</div>
+    <div class="s-pill" data-step="D" onclick="explainProtocolStep('D')"><span class="letter">D</span>הכרה (AVPU)</div>
+    <div class="s-pill" data-step="E" onclick="explainProtocolStep('E')"><span class="letter">E</span>קיבוע ופינוי</div>
+  </div>
+
+  <div class="guidance-box" id="guidanceBox">
+    <div class="guidance-text" id="guidanceText">
+      <strong>שלב 1 (S — בטיחות):</strong> לפני כל מגע בפצוע, לבש <strong>כפפות חד-פעמיות</strong> להגנה ממגע בדם והזעק <strong>מד"א 101</strong>.
+    </div>
+  </div>
+
+  <div class="patient-bubble" title="דיווח מילולי של הפצוע — עוזר להעריך A, B ו-AVPU">
+    <div class="patient-avatar" id="patientEmoji">😰</div>
+    <div class="patient-quote" id="patientQuote">"איי! נחתכתי עמוק מהזכוכית... הדם לא מפסיק להתיז!"</div>
+  </div>
+</section>
+
+<!-- MAIN 3-COLUMN WORKSPACE -->
+<main class="workspace">
+
+  <!-- RIGHT COLUMN (RTL First): ME'AR TOOLKIT -->
+  <aside class="panel">
+    <div class="panel-header">
+      <div class="panel-title">🧰 ארגז כלים — מע"ר</div>
+      <span class="panel-badge" id="mdaBadge">מד"א לא הוזעק</span>
+    </div>
+
+    <div class="toolkit-body">
+      <div>
+        <div class="tool-section-label">
+          <span>ציוד בסיסי</span>
+          <span>5 פריטים</span>
+        </div>
+        <div class="tool-list">
+          <button class="tool-btn" id="tool-gloves" onclick="useGloves()">
+            <div class="tool-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 11V6a2 2 0 0 0-4 0v4M14 10V4a2 2 0 0 0-4 0v6M10 10V5a2 2 0 0 0-4 0v9"/>
+                <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2a8 8 0 0 1-7.4-5L3 13a2 2 0 0 1 3-2.5L6 14"/>
+              </svg>
+            </div>
+            <div class="tool-info">
+              <div class="tool-name">כפפות חד-פעמיות <span class="tool-status" id="st-gloves" style="display:none">הולבש ✓</span></div>
+              <div class="tool-desc">בטיחות המטפל (S) לפני מגע בדם</div>
+            </div>
+          </button>
+
+          <button class="tool-btn" id="tool-gauze" onclick="useGauze()">
+            <div class="tool-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f8fafc" stroke-width="2">
+                <rect x="4" y="4" width="16" height="16" rx="2"/>
+                <path d="M4 9h16M4 15h16M9 4v16M15 4v16" opacity="0.55"/>
+              </svg>
+            </div>
+            <div class="tool-info">
+              <div class="tool-name">גזה סטרילית <span class="tool-status" id="st-gauze" style="display:none">0 שכבות</span></div>
+              <div class="tool-desc">הנחה ישירה על הפצע (ניתן להוסיף שכבה)</div>
+            </div>
+          </button>
+
+          <button class="tool-btn" id="tool-bandage" onclick="usePersonalBandage()">
+            <div class="tool-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a3b18a" stroke-width="2">
+                <rect x="3" y="8" width="18" height="8" rx="4"/>
+                <rect x="9" y="8" width="6" height="8" fill="rgba(163,177,138,0.25)"/>
+                <circle cx="6.5" cy="12" r="0.8" fill="#a3b18a"/><circle cx="17.5" cy="12" r="0.8" fill="#a3b18a"/>
+              </svg>
+            </div>
+            <div class="tool-info">
+              <div class="tool-name">תחבושת אישית <span class="tool-status" id="st-bandage" style="display:none">נחבש ✓</span></div>
+              <div class="tool-desc">חבישת לחץ קבועה מעל הגזה</div>
+            </div>
+          </button>
+
+          <button class="tool-btn" id="tool-cat" onclick="selectCatTool()">
+            <div class="tool-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                <rect x="3" y="9" width="18" height="6" rx="2"/>
+                <path d="M8 5l8 14M12 9v6" stroke="#ef4444" stroke-width="2.2"/>
+              </svg>
+            </div>
+            <div class="tool-info">
+              <div class="tool-name">חוסם עורקים CAT <span class="tool-status warn" id="st-cat" style="display:none">מונח</span></div>
+              <div class="tool-desc">לדימום פורץ בגפה — 5–7 ס"מ מעל הפצע</div>
+            </div>
+          </button>
+
+          <button class="tool-btn" id="tool-triangle" onclick="useTriangle()">
+            <div class="tool-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2" stroke-linejoin="round">
+                <polygon points="12,4 21,19 3,19"/>
+              </svg>
+            </div>
+            <div class="tool-info">
+              <div class="tool-name">משולש בד <span class="tool-status" id="st-triangle" style="display:none">מקובע ✓</span></div>
+              <div class="tool-desc">קיבוע ותמיכת האמה במתלה מוגבה</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="tool-section-label">
+          <span>פעולות בסיסיות</span>
+          <span>3 פעולות</span>
+        </div>
+        <div class="tool-list">
+          <button class="tool-btn" id="tool-pressure" onclick="toggleDirectPressure()">
+            <div class="tool-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round">
+                <path d="M12 3v11M8 10l4 4 4-4"/>
+                <path d="M5 19h14"/>
+              </svg>
+            </div>
+            <div class="tool-info">
+              <div class="tool-name">הפעלת לחץ ישיר <span class="tool-status" id="st-pressure" style="display:none">פעיל</span></div>
+              <div class="tool-desc">לחץ כאן או לחץ והחזק ישירות על הפצע</div>
+              <div class="pressure-bar-wrap" id="pressureBarWrap">
+                <div class="pressure-bar-fill" id="pressureBarFill"></div>
+              </div>
+            </div>
+          </button>
+
+          <button class="tool-btn" id="tool-elevate" onclick="toggleElevation()">
+            <div class="tool-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round">
+                <path d="M12 19V5M7 10l5-5 5 5"/>
+              </svg>
+            </div>
+            <div class="tool-info">
+              <div class="tool-name">הרמת גפה <span class="tool-status" id="st-elevate" style="display:none">מורמת ↑</span></div>
+              <div class="tool-desc">הגבהת האמה מעל גובה הלב להפחתת לחץ</div>
+            </div>
+          </button>
+
+          <button class="tool-btn" id="tool-mda" onclick="openMdaModal()">
+            <div class="tool-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.8 19.8 0 0 1 3.08 5.18 2 2 0 0 1 5.06 3h3a2 2 0 0 1 2 1.72c.12.9.34 1.78.65 2.62a2 2 0 0 1-.45 2.11L9 10.7a16 16 0 0 0 4.3 4.3l1.25-1.26a2 2 0 0 1 2.11-.45c.84.31 1.72.53 2.62.65A2 2 0 0 1 22 16.92z"/>
+              </svg>
+            </div>
+            <div class="tool-info">
+              <div class="tool-name">קריאה למד"א 101 <span class="tool-status call" id="st-mda" style="display:none">בדרך</span></div>
+              <div class="tool-desc">הזנקת אמבולנס ודיווח מצב פצוע</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <button class="finish-btn" id="btnDebrief" onclick="openDebrief(false)">
+        📋 סיים טיפול וקבל תחקיר רפואי
+      </button>
+    </div>
+  </aside>
+
+  <!-- CENTER COLUMN: ANATOMICAL CANVAS & LAYER EXPLORER -->
+  <section class="stage-column">
+    <div class="panel">
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <canvas id="anatomyCanvas"></canvas>
+
+        <!-- Floating Controls on Top of Canvas -->
+        <div class="canvas-overlay-top">
+          <div class="canvas-toolbar">
+            <button class="canvas-chip on" id="chipLabels" onclick="toggleLabels()">🏷️ תוויות אנטומיות</button>
+            <button class="canvas-chip" id="chipZoom" onclick="toggleZoom()">🔍 זום לפצע</button>
+            <button class="canvas-chip" id="chipCross" onclick="toggleCrossSection()">🧬 חתך רוחב שכבות</button>
+          </div>
+
+          <div class="bleed-status-pill active-bleed" id="bleedStatusPill">
+            <span class="pulse-dot"></span>
+            <span id="bleedStatusText">דימום עורקי פורץ — פעיל</span>
+          </div>
+        </div>
+
+        <!-- Floating Toast & Hover Tooltip -->
+        <div class="canvas-toast" id="canvasToast"></div>
+        <div class="anatomy-tooltip" id="anatomyTooltip"></div>
+
+        <!-- Interactive CAT Tourniquet Bar -->
+        <div class="cat-control-bar" id="catControlBar">
+          <div style="font-size:0.8rem;">
+            <strong style="color:#fcd34d;" id="catBarTitle">חוסם עורקים CAT:</strong>
+            <span id="catBarMsg" style="color:#e2e8f0;">לחץ על האמה 5–7 ס"מ מעל הפצע (בצד המרפק/ימין) להנחה</span>
+          </div>
+          <div class="cat-controls-group" id="catActionBtns" style="display:none;">
+            <button class="cat-btn" id="btnWindlassUp" onclick="adjustWindlass(1)">↻ הדק מקל (<span id="windlassCount">0</span>/3)</button>
+            <button class="cat-btn" id="btnWindlassDown" onclick="adjustWindlass(-1)">↺ שחרר</button>
+            <button class="cat-btn time-btn" id="btnCatTime" onclick="stampCatTime()">🕒 רשום שעת הנחה</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clickable Layer Pills -->
+      <div class="layers-strip">
+        <div class="layers-strip-header">
+          <span>🔬 לחץ על שכבה אנטומית בציור או כאן כדי לחקור אותה:</span>
+          <span id="inspectHint" style="color:var(--accent);">פעיל במצב לימוד</span>
+        </div>
+        <div class="layer-pills" id="layerPills"></div>
+      </div>
+    </div>
+
+    <!-- Anatomical Details Card (shown when clicking a layer) -->
+    <div class="anatomy-card" id="anatomyCard">
+      <div class="anatomy-card-head">
+        <div class="anatomy-card-title">
+          <span class="layer-swatch" id="acSwatch" style="width:14px;height:14px;"></span>
+          <span id="acName">עורק רדיאלי פועם</span>
+          <span class="anatomy-card-latin" id="acLatin">(Radial Artery)</span>
+        </div>
+        <button class="icon-btn" style="padding:3px 9px;font-size:0.74rem;" onclick="closeAnatomyCard()">✕ סגור</button>
+      </div>
+      <div class="anatomy-grid">
+        <div class="anatomy-fact">
+          <h5>📌 מבנה ותפקיד אנטומי</h5>
+          <div id="acRole"></div>
+        </div>
+        <div class="anatomy-fact">
+          <h5>🩸 מאפייני דימום מהשכבה</h5>
+          <div id="acBleed"></div>
+        </div>
+        <div class="anatomy-fact">
+          <h5>🚑 מה חשוב למע"ר לדעת?</h5>
+          <div id="acFirstAid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Optional Anatomical Cross-Section Schematic -->
+    <div class="cross-section-box" id="crossSectionBox">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <strong style="font-size:0.86rem;color:#7dd3fc;">🧬 מבט חתך רוחב אנטומי של האמה (מהשטח פנימה)</strong>
+        <button class="icon-btn" style="padding:2px 8px;font-size:0.72rem;" onclick="toggleCrossSection()">הסתר</button>
+      </div>
+      <svg viewBox="0 0 760 175" width="100%" style="border-radius:8px;background:#090f1d;border:1px solid rgba(148,163,184,0.18);">
+        <!-- Epidermis -->
+        <rect x="18" y="16" width="462" height="16" rx="4" fill="#d9a583" stroke="#f0cbb1" stroke-width="1" style="cursor:pointer" onclick="inspectLayer('epidermis')"/>
+        <!-- Dermis + Capillaries -->
+        <rect x="18" y="32" width="462" height="22" fill="#d97b72" style="cursor:pointer" onclick="inspectLayer('dermis')"/>
+        <path d="M36 43 q18-6 36 0 t36 0 t36 0 M265 42 q16 6 32 0 t32 0 M395 43 q18-5 36 0" stroke="#ef4444" stroke-width="1.6" fill="none" style="cursor:pointer" onclick="inspectLayer('capillaries')"/>
+        <!-- Subcutaneous Fat -->
+        <rect x="18" y="54" width="462" height="30" fill="#e6b43c" style="cursor:pointer" onclick="inspectLayer('fat')"/>
+        <g fill="#f7d572" opacity="0.65" style="cursor:pointer" onclick="inspectLayer('fat')">
+          <circle cx="44" cy="69" r="10"/><circle cx="72" cy="68" r="11"/><circle cx="102" cy="70" r="10"/>
+          <circle cx="132" cy="68" r="11"/><circle cx="158" cy="69" r="10"/><circle cx="282" cy="68" r="11"/>
+          <circle cx="312" cy="70" r="10"/><circle cx="342" cy="68" r="11"/><circle cx="374" cy="69" r="10"/>
+          <circle cx="406" cy="68" r="11"/><circle cx="438" cy="69" r="10"/><circle cx="464" cy="68" r="10"/>
+        </g>
+        <!-- Muscle Layer -->
+        <rect x="18" y="84" width="462" height="72" rx="4" fill="#8f242c" style="cursor:pointer" onclick="inspectLayer('muscle')"/>
+        <g stroke="#b83842" stroke-width="1.4" opacity="0.55" style="cursor:pointer" onclick="inspectLayer('muscle')">
+          <line x1="22" y1="98" x2="476" y2="98"/><line x1="22" y1="112" x2="476" y2="112"/>
+          <line x1="22" y1="128" x2="476" y2="128"/><line x1="22" y1="143" x2="476" y2="143"/>
+        </g>
+        <!-- Deep Laceration V-Cut -->
+        <path d="M172 16 L192 55 L206 98 L230 122 L254 96 L266 54 L282 16 Z" fill="#180509" stroke="#ff4d5a" stroke-width="1.5"/>
+        <!-- Tendons inside muscle -->
+        <ellipse cx="132" cy="118" rx="17" ry="8" fill="#f1ece1" stroke="#cbd5e1" style="cursor:pointer" onclick="inspectLayer('tendon')"/>
+        <ellipse cx="322" cy="118" rx="17" ry="8" fill="#f1ece1" stroke="#cbd5e1" style="cursor:pointer" onclick="inspectLayer('tendon')"/>
+        <!-- Vein -->
+        <circle cx="252" cy="84" r="10" fill="#37488a" stroke="#818cf8" stroke-width="2" style="cursor:pointer" onclick="inspectLayer('vein')"/>
+        <!-- Pulsing Artery -->
+        <circle cx="208" cy="103" r="10" fill="#e11d48" stroke="#fda4af" stroke-width="2.5" style="cursor:pointer" onclick="inspectLayer('artery')"/>
+        <!-- Right-hand Hebrew Legend (RTL start = right-aligned inside viewBox!) -->
+        <g font-size="11.5" font-weight="700" fill="#e2e8f0" direction="rtl" text-anchor="start">
+          <text x="746" y="28" style="cursor:pointer" onclick="inspectLayer('epidermis')">1. אפידרמיס (עור חיצוני)</text>
+          <text x="746" y="48" style="cursor:pointer" onclick="inspectLayer('dermis')">2. דרמיס + רשת נימים</text>
+          <text x="746" y="73" style="cursor:pointer" onclick="inspectLayer('fat')">3. רקמת שומן תת-עורית</text>
+          <text x="746" y="96" fill="#93c5fd" style="cursor:pointer" onclick="inspectLayer('vein')">4. וריד (זרימה כהה ורציפה)</text>
+          <text x="746" y="116" fill="#fda4af" style="cursor:pointer" onclick="inspectLayer('artery')">5. עורק פועם (התזה בהירה)</text>
+          <text x="746" y="137" fill="#f8fafc" style="cursor:pointer" onclick="inspectLayer('tendon')">6. גידים לבנים (שריר-עצם)</text>
+          <text x="746" y="156" fill="#fca5a5" style="cursor:pointer" onclick="inspectLayer('muscle')">7. שרירי האמה (רקמה עמוקה)</text>
+        </g>
+        <g stroke="#64748b" stroke-dasharray="3 3" stroke-width="1">
+          <line x1="480" y1="24" x2="532" y2="24"/>
+          <line x1="480" y1="44" x2="532" y2="44"/>
+          <line x1="480" y1="69" x2="532" y2="69"/>
+          <line x1="262" y1="86" x2="532" y2="92"/>
+          <line x1="218" y1="105" x2="532" y2="112"/>
+          <line x1="339" y1="120" x2="532" y2="133"/>
+          <line x1="480" y1="150" x2="532" y2="152"/>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- LEFT COLUMN (RTL Third): LIVE PHYSIOLOGICAL MONITOR -->
+  <aside class="panel monitor-panel">
+    <div class="panel-header">
+      <div class="panel-title">📟 מוניטור מדדים חיים</div>
+      <span class="panel-badge" id="simClock">00:00</span>
+    </div>
+
+    <div class="monitor-body">
+      <!-- Live ECG / Pulse Waveform -->
+      <div class="ecg-box">
+        <div class="ecg-label">
+          <span>PLETH / ECG LIVE</span>
+          <span id="ecgSubLabel">קצב סינוס תקין</span>
+        </div>
+        <canvas id="ecgCanvas"></canvas>
+      </div>
+
+      <!-- Blood Loss & Shock Stage -->
+      <div class="blood-loss-card">
+        <div class="blood-loss-top">
+          <span>איבוד דם משוער: <strong id="bloodLostVal" style="color:#fca5a5;">0 מ"ל (0%)</strong></span>
+          <span class="shock-badge" id="shockBadge">יציב</span>
+        </div>
+        <div class="loss-bar-bg">
+          <div class="loss-bar-fill" id="lossBarFill"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.68rem;color:var(--text-dim);margin-top:4px;">
+          <span>0%</span>
+          <span>15% (שלב II)</span>
+          <span>30% (שלב III)</span>
+          <span>40%+ (קריטי)</span>
+        </div>
+      </div>
+
+      <!-- Vital 1: Heart Rate -->
+      <div class="vital-card" id="card-hr">
+        <div class="vital-top">
+          <div class="vital-label">❤️ דופק (HR)</div>
+          <div class="vital-value-wrap">
+            <span class="vital-trend" id="trend-hr"></span>
+            <span class="vital-value" id="val-hr" style="color:#34d399;">76</span>
+            <span class="vital-unit">פעימות/דקה</span>
+          </div>
+        </div>
+        <div class="vital-why"><span class="why-tag">למה זה קורה?</span><span id="why-hr">הדופק תקין — הלב מזרים דם בקצב רגיל לכל האיברים.</span></div>
+      </div>
+
+      <!-- Vital 2: Respiratory Rate -->
+      <div class="vital-card" id="card-rr">
+        <div class="vital-top">
+          <div class="vital-label">🫁 קצב נשימה (RR)</div>
+          <div class="vital-value-wrap">
+            <span class="vital-trend" id="trend-rr"></span>
+            <span class="vital-value" id="val-rr" style="color:#38bdf8;">15</span>
+            <span class="vital-unit">נשימות/דקה</span>
+          </div>
+        </div>
+        <div class="vital-why"><span class="why-tag">למה זה קורה?</span><span id="why-rr">קצב נשימה תקין (12–20 במבוגר) — חמצון הגוף מספק.</span></div>
+      </div>
+
+      <!-- Vital 3: Blood Pressure -->
+      <div class="vital-card" id="card-bp">
+        <div class="vital-top">
+          <div class="vital-label">🩺 לחץ דם (BP)</div>
+          <div class="vital-value-wrap">
+            <span class="vital-trend" id="trend-bp"></span>
+            <span class="vital-value" id="val-bp" style="color:#f472b6;">122/78</span>
+            <span class="vital-unit">ממ"כ</span>
+          </div>
+        </div>
+        <div class="vital-why"><span class="why-tag">למה זה קורה?</span><span id="why-bp">לחץ דם תקין — נפח הדם בכלי הדם שומר על זילוח תקין.</span></div>
+      </div>
+
+      <!-- Vital 4: AVPU Consciousness -->
+      <div class="vital-card" id="card-avpu">
+        <div class="vital-top">
+          <div class="vital-label">🧠 רמת הכרה (AVPU)</div>
+          <div class="vital-value-wrap">
+            <span class="vital-value" id="val-avpu" style="font-size:1rem;color:#6ee7b7;">A — ערני ומדבר</span>
+          </div>
+        </div>
+        <div class="avpu-row">
+          <div class="avpu-pill active-A" id="avpu-A">A ערני</div>
+          <div class="avpu-pill" id="avpu-V">V קול</div>
+          <div class="avpu-pill" id="avpu-P">P כאב</div>
+          <div class="avpu-pill" id="avpu-U">U ללא תגובה</div>
+        </div>
+        <div class="vital-why"><span class="why-tag">למה זה קורה?</span><span id="why-avpu">אספקת הדם והחמצן למוח תקינה — הפצוע ערני, מדבר ומתמצא.</span></div>
+      </div>
+
+      <!-- Physical Signs (Skin / Perfusion) -->
+      <div class="skin-signs">
+        <span>🖐️ <strong>עור:</strong> <span id="skinSignText">חם וורוד</span></span>
+        <span>⏱️ <strong>מילוי קפילרי:</strong> <span id="capRefillText">&lt; 2 שנ'</span></span>
+      </div>
+
+      <!-- Live Action Log -->
+      <div>
+        <div style="font-size:0.72rem;color:var(--text-muted);font-weight:700;margin-bottom:4px;">📝 יומן פעולות ואירועים</div>
+        <div class="event-log" id="eventLog"></div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<!-- MDA 101 DISPATCH MODAL -->
+<div class="modal-backdrop" id="mdaModal">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-head">
+      <strong style="font-size:1rem;color:#fca5a5;">🚑 מוקד חירום מד"א — 101</strong>
+      <button class="icon-btn" onclick="closeMdaModal()">✕</button>
+    </div>
+    <div class="modal-content">
+      <p style="font-size:0.86rem;color:#cbd5e1;">
+        "שלום, מד"א 101. מסור בקצרה את פרטי הפצוע כדי שנזניק ניידת טיפול נמרץ מיד:"
+      </p>
+      <div style="background:rgba(15,23,42,0.8);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:0.82rem;display:flex;flex-direction:column;gap:6px;">
+        <div>📍 <strong>מיקום:</strong> חתך עמוק באמה — סביבה בטוחה</div>
+        <div>🩸 <strong>סוג פגיעה מדווח:</strong> <span id="mdaReportBleed"></span></div>
+        <div>🧠 <strong>רמת הכרה נוכחית (AVPU):</strong> <span id="mdaReportAvpu"></span></div>
+        <div>⚠️ <strong>טיפ למע"ר:</strong> במידה שיש עובר אורח נוסף, הפנה אותו להתקשר 101 כדי שתוכל להמשיך ללחוץ על הפצע ברציפות!</div>
+      </div>
+      <div class="modal-actions">
+        <button class="icon-btn" onclick="closeMdaModal()">ביטול</button>
+        <button class="primary-btn" style="background:linear-gradient(135deg,#dc2626,#991b1b);" onclick="confirmMdaCall()">📞 אשר הזנקת אמבולנס 101</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MEDICAL DEBRIEF MODAL -->
+<div class="modal-backdrop" id="debriefModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <strong style="font-size:1.05rem;">📋 תחקיר רפואי מפורט — סיכום ביצועי מע"ר</strong>
+      <button class="icon-btn" onclick="closeDebrief()">✕ סגור</button>
+    </div>
+    <div class="modal-content" id="debriefContent"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* =========================================================
+     1. ANATOMICAL KNOWLEDGE BASE (Hebrew, Beginner-Friendly)
+     ========================================================= */
+  const ANATOMY_DATA = {
+    epidermis: {
+      name: 'אפידרמיס (שכבת העור החיצונית)',
+      latin: 'Epidermis',
+      color: '#dfb091',
+      role: 'השכבה הדקה והחיצונית ביותר של העור. משמשת מחסום פיזי ראשון המגן על הגוף מפני חיידקים, זיהומים והתייבשות. אינה מכילה כלי דם משל עצמה.',
+      bleed: 'פגיעה שטחית באפידרמיס בלבד כמעט אינה מדממת (שפשוף קל), אך כאשר החתך חוצה אותה נחשפות השכבות הפנימיות העשירות בכלי דם.',
+      firstAid: 'שמירה על ניקיון הפצע וכיסוי בגזה סטרילית מונעים חדירת מזהמים דרך הפתח שנוצר במחסום העור.'
+    },
+    dermis: {
+      name: 'דרמיס (שכבת העור הפנימית)',
+      latin: 'Dermis',
+      color: '#e0867d',
+      role: 'שכבת רקמת חיבור עבה וגמישה מתחת לאפידרמיס. מכילה קולגן, קצות עצבים (תחושת כאב), בלוטות זיעה ורשת עשירה של נימים זעירים.',
+      bleed: 'גורמת לדימום נימי (איטי ואחיד לאורך שולי החתך) ולכאב חד עקב פגיעה בקצות העצבים.',
+      firstAid: 'לחיצה מקומית קלה עם גזה סטרילית עוצרת דימום מהדרמיס בתוך דקות. שים לב להרגיע את הפצוע בשל הכאב.'
+    },
+    capillaries: {
+      name: 'נימים (כלי דם זעירים)',
+      latin: 'Capillaries',
+      color: '#f43f5e',
+      role: 'כלי הדם הדקים ביותר בגוף (בקוטר של תא דם אחד). בהם מתבצע חילוף החמצן והמזון בין הדם לבין תאי הרקמה.',
+      bleed: 'דימום נימי: חלחול איטי ואדום-ורדרד משטח הפצע, בלחץ נמוך מאוד. נקרש בקלות יחסית.',
+      firstAid: 'דימום נימי אינו מסכן חיים — מספיקה שטיפה/חבישה בגזה סטרילית ולחץ ישיר עדין.'
+    },
+    fat: {
+      name: 'רקמת שומן תת-עורית (היפודרמיס)',
+      latin: 'Subcutaneous Adipose Tissue',
+      color: '#f2c14e',
+      role: 'אשכולות צהובים-זהובים של תאי שומן מתחת לדרמיס. מספקת בידוד תרמי, ריפוד והגנה לשרירים וכלי הדם, ודרכה עוברים הוורידים השטחיים.',
+      bleed: 'חשיפה של כדוריות שומן צהובות מעידה על חתך עמוק משמעותית הדורש טיפול רפואי ותפירה בבית חולים.',
+      firstAid: 'כשרואים רקמת שומן בפצע — אל תנסה לנקות בכוח או לשלוף גופים זרים עמוקים! התמקד בעצירת הדימום ובכיסוי סטרילי.'
+    },
+    muscle: {
+      name: 'שרירי האמה (שריר משורטט)',
+      latin: 'Flexor Carpi Radialis / Digitorum',
+      color: '#a82830',
+      role: 'סיבי שריר אדומים כהים המכופפים את שורש כף היד והאצבעות. השריר עשיר מאוד באספקת דם כדי לייצר תנועה וכוח.',
+      bleed: 'חתך בשריר גורם לדימום משמעותי יותר מדימום שטחי ועלול להחליש את תנועת האצבעות וכף היד.',
+      firstAid: 'הפעל לחץ ישיר יציב ואחיד, ולאחר עצירת הדימום קבע את הגפה במשולש בד כדי למנוע תנועה שפותחת מחדש את הפצע.'
+    },
+    tendon: {
+      name: 'גידים לבנים',
+      latin: 'Flexor Tendons (Palmaris Longus / FCR)',
+      color: '#f1ede4',
+      role: 'רצועות חזקות, מבריקות ולבנות מסיבי קולגן צפופים המחברות את השרירים לעצמות כף היד ומעבירות את כוח ההתכווצות.',
+      bleed: 'לגידים אספקת דם מועטה מאוד ולכן הם כמעט אינם מדממים בעצמם, אך הם פגיעים מאוד לחתכים עמוקים.',
+      firstAid: 'אין להפעיל או לבקש מהפצוע להזיז בכוח אצבעות אם נראה גיד חשוף — שמור על קיבוע עדין והעבר לבדיקה רפואית.'
+    },
+    vein: {
+      name: 'וריד באמה (כלי דם ורידי)',
+      latin: 'Median Antebrachial / Cephalic Vein',
+      color: '#4f5fa8',
+      role: 'כלי דם בעל דופן דקה וגמישה המחזיר דם דל-חמצן מהגפה בחזרה אל הלב. הלחץ בתוכו נמוך משמעותית מהלחץ בעורק.',
+      bleed: 'דימום ורידי: דם אדום כהה (בורדו) הזורם בקצב רציף ואחיד (ללא התזות פועמות). עדיין עלול לגרום לאיבוד דם מסוכן!',
+      firstAid: 'עוצרים באמצעות גזה סטרילית, לחץ ישיר חזק, הרמת הגפה מעל גובה הלב ותחבושת אישית. לרוב אין צורך בחוסם עורקים אם הלחץ עוצר את הדם.'
+    },
+    artery: {
+      name: 'עורק רדיאלי פועם (כלי דם עורקי)',
+      latin: 'Radial Artery',
+      color: '#ef233c',
+      role: 'עורק ראשי באמה המזרים דם עשיר בחמצן בלחץ גבוה ישירות מהלב אל כף היד. בעל דופן שרירית עבה הפועמת בהתאמה לכל פעימת לב (כאן מודדים דופק רדיאלי!).',
+      bleed: 'דימום עורקי פורץ: דם אדום בהיר המתיז בפולסים (קשתות) התואמים לדופק הפצוע! מצב חירום מסכן חיים המוביל להלם תוך דקות.',
+      firstAid: 'עדיפות עליונה לאחר בטיחות וכפפות! התחל מיד בלחץ ישיר חזק עם גזה, ואם הדימום הפורץ נמשך/מסכן חיים — הנח חוסם עורקים CAT בגובה 5–7 ס"מ מעל הפצע, הדק עד עצירה מוחלטת ורשום שעה!'
+    }
+  };
+
+  /* =========================================================
+     2. SCENARIO DEFINITIONS
+     ========================================================= */
+  const SCENARIOS = {
+    arterial: {
+      id: 'arterial',
+      title: 'דימום עורקי עמוק (עורק רדיאלי)',
+      shortType: 'דימום עורקי פורץ (אדום בהיר בפולסים)',
+      hasArterial: true,
+      hasVenous: false,
+      baseArterialRate: 17.5, // mL/sec simulated clinical pace
+      baseVenousRate: 0,
+      needsTourniquet: true,
+      initialQuote: '"איי! נחתכתי עמוק מהזכוכית... הדם מתיז בקשת ולא מפסיק!"'
+    },
+    venous: {
+      id: 'venous',
+      title: 'דימום ורידי עמוק באמה',
+      shortType: 'דימום ורידי עמוק (דם כהה בזרימה רציפה)',
+      hasArterial: false,
+      hasVenous: true,
+      baseArterialRate: 0,
+      baseVenousRate: 11.0,
+      needsTourniquet: false,
+      initialQuote: '"נחתכתי מסכין חדה באמה... הדם הכהה זורם בלי הפסקה!"'
+    },
+    mixed: {
+      id: 'mixed',
+      title: 'פגיעה משולבת (עורק + וריד)',
+      shortType: 'דימום משולב — עורקי פורץ + ורידי רציף',
+      hasArterial: true,
+      hasVenous: true,
+      baseArterialRate: 16.0,
+      baseVenousRate: 7.5,
+      needsTourniquet: true,
+      initialQuote: '"זכוכית נשברה לי על היד! יוצא המון דם — גם כהה וגם בהתזות!"'
+    }
+  };
+
+  /* =========================================================
+     3. APPLICATION STATE
+     ========================================================= */
+  const TOTAL_BLOOD_VOLUME = 5000; // Adult ~5L
+
+  let state = {};
+  let particles = [];
+  let rivulets = [];
+  let ecgBuffer = [];
+  let animTime = 0;
+  let lastFrameTs = 0;
+  let audioCtx = null;
+  let soundEnabled = false;
+  let lastBeatIndex = -1;
+  let toastTimeout = null;
+
+  // Deterministic pseudo-random generator for organic fat lobules & skin texture
+  function mulberry32(seed) {
+    return function() {
+      let t = seed += 0x6D2B79F5;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // Precomputed organic anatomical geometry details (zero frame flicker)
+  const rng = mulberry32(202604);
+  const FAT_LOBULES = [];
+  for (let i = 0; i < 66; i++) {
+    const angle = (i / 66) * Math.PI * 2 + (rng() - 0.5) * 0.08;
+    const rx = 98 + (rng() - 0.5) * 14;
+    const ry = 50 + (rng() - 0.5) * 10;
+    FAT_LOBULES.push({
+      x: Math.cos(angle) * rx,
+      y: Math.sin(angle) * ry,
+      r: 6.5 + rng() * 5.2,
+      shade: rng()
+    });
+  }
+  const SKIN_DOTS = [];
+  for (let i = 0; i < 140; i++) {
+    SKIN_DOTS.push({
+      x: 110 + rng() * 680,
+      y: 150 + rng() * 220,
+      r: 0.7 + rng() * 1.1,
+      len: 3 + rng() * 5,
+      ang: -0.4 + (rng() - 0.5) * 0.4
+    });
+  }
+
+  function createFreshState(mode = 'learn', scenarioId = 'arterial') {
+    const sc = SCENARIOS[scenarioId] || SCENARIOS.arterial;
+    return {
+      mode, // 'learn' | 'practice'
+      scenarioId: sc.id,
+      paused: false,
+      speed: mode === 'learn' ? 0.65 : 1.0, // gentler default speed in learning mode
+      elapsedSec: 0,
+      finished: false,
+      collapsed: false,
+
+      // View options
+      showLabels: mode === 'learn',
+      zoomed: false,
+      zoomLevel: 1.0,
+      showCrossSection: false,
+      hoveredLayer: null,
+      selectedLayer: null,
+
+      // Equipment & Interventions
+      glovesOn: false,
+      touchedBloodWithoutGloves: false,
+      gauzeLayers: 0,
+      gauzeSaturation: 0, // 0..1
+      triedRemoveGauze: false,
+      personalBandageOn: false,
+      catMode: false, // awaiting click on forearm to place CAT
+      catPlaced: false,
+      catX: 605,
+      catWrongAttempts: 0,
+      catWindlassTurns: 0, // 0..3
+      catTimeStamped: null,
+      triangleOn: false,
+
+      directPressureToggle: false,
+      canvasPressing: false,
+      pressureStrength: 0, // 0..1 smoothly ramped
+      elevated: false,
+      elevationAngle: 0, // smoothed radians
+
+      mdaCalled: false,
+      mdaCallTimeSec: null,
+      mdaEtaSec: null,
+      mdaArrived: false,
+
+      // Hemodynamics & Bleeding
+      bloodLostMl: 0,
+      currentBleedRateMlSec: sc.baseArterialRate + sc.baseVenousRate,
+      arterialBleedRate: sc.baseArterialRate,
+      venousBleedRate: sc.baseVenousRate,
+      bleedingStoppedAtSec: null,
+      clotProgress: 0, // 0..1 for venous/capillary clotting under sustained pressure
+      woundPoolLevel: 0.28, // 0..1
+
+      // Vitals (smoothed)
+      hr: 76,
+      rr: 15,
+      sbp: 122,
+      dbp: 78,
+      avpu: 'A', // A, V, P, U
+      pulsePhase: 0, // 0..1
+
+      // Tracking for Debrief
+      abChecked: false,
+      actionsLog: [],
+      firstPressureTimeSec: null,
+      firstGauzeTimeSec: null,
+      catStoppedTimeSec: null
+    };
+  }
+
+  /* =========================================================
+     4. DOM REFERENCES & CANVAS SETUP
+     ========================================================= */
+  const canvas = document.getElementById('anatomyCanvas');
+  const ctx = canvas.getContext('2d');
+  const ecgCanvas = document.getElementById('ecgCanvas');
+  const ecgCtx = ecgCanvas.getContext('2d');
+
+  const LOGICAL_W = 880;
+  const LOGICAL_H = 510;
+  const PIVOT_X = 770; // Elbow pivot for limb elevation
+  const PIVOT_Y = 262;
+  const WOUND_X = 435;
+  const WOUND_Y = 262;
+
+  function resizeCanvases() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = Math.max(300, Math.floor(rect.width * dpr));
+    canvas.height = Math.max(240, Math.floor(rect.height * dpr));
+
+    const eRect = ecgCanvas.getBoundingClientRect();
+    ecgCanvas.width = Math.max(200, Math.floor(eRect.width * dpr));
+    ecgCanvas.height = Math.max(40, Math.floor(eRect.height * dpr));
+  }
+  window.addEventListener('resize', resizeCanvases);
+
+  /* =========================================================
+     5. AUDIO FEEDBACK (Subtle Optional Monitor Beep)
+     ========================================================= */
+  function playHeartbeatBeep(sbp) {
+    if (!soundEnabled) return;
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      // Slightly lower frequency as shock worsens
+      const freq = Math.max(460, Math.min(820, 480 + (sbp - 60) * 4.5));
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.045, audioCtx.currentTime + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.09);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1);
+    } catch (_) {}
+  }
+
+  window.toggleSound = function() {
+    soundEnabled = !soundEnabled;
+    const btn = document.getElementById('btnSound');
+    btn.textContent = soundEnabled ? '🔊 צליל מוניטור' : '🔇 צליל מוניטור';
+    btn.classList.toggle('active-toggle', soundEnabled);
+    if (soundEnabled) playHeartbeatBeep(state.sbp);
+  };
+
+  /* =========================================================
+     6. LOGGING, TOASTS & UI HELPERS
+     ========================================================= */
+  function formatClock(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
+  function addLog(msg, type = 'info') {
+    const entry = {
+      time: formatClock(state.elapsedSec),
+      sec: state.elapsedSec,
+      msg,
+      type,
+      bloodMl: Math.round(state.bloodLostMl)
+    };
+    state.actionsLog.push(entry);
+    const logEl = document.getElementById('eventLog');
+    const div = document.createElement('div');
+    div.className = `log-item ${type}`;
+    div.innerHTML = `<span class="log-time">[${entry.time}]</span><span>${msg}</span>`;
+    logEl.prepend(div);
+  }
+
+  function showToast(msg, kind = 'info', duration = 3600) {
+    const el = document.getElementById('canvasToast');
+    el.className = 'canvas-toast show' + (kind === 'warn' ? ' toast-warn' : kind === 'err' ? ' toast-err' : kind === 'ok' ? ' toast-ok' : '');
+    el.textContent = msg;
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => { el.classList.remove('show'); }, duration);
+  }
+
+  /* =========================================================
+     7. TOOLKIT ACTIONS (ME'AR LEVEL ONLY)
+     ========================================================= */
+  function checkGlovesSafety(actionName) {
+    if (!state.glovesOn) {
+      state.touchedBloodWithoutGloves = true;
+      addLog(`אזהרת בטיחות: בוצעה פעולה (${actionName}) ללא כפפות!`, 'bad');
+      showToast('⚠️ שים לב! נגעת בפצע ללא כפפות — חובה להניח כפפות לבטיחות המטפל (שלב S)!', 'err', 4200);
+    }
+  }
+
+  window.useGloves = function() {
+    if (state.finished) return;
+    if (state.glovesOn) {
+      showToast('הכפפות החד-פעמיות כבר מולבשות על ידיך ✓', 'ok', 2200);
+      return;
+    }
+    state.glovesOn = true;
+    addLog('הולבשו כפפות חד-פעמיות (בטיחות המטפל — S)', 'good');
+    showToast('🧤 כפפות מולבשות! כעת ניתן לטפל בפצע בצורה בטוחה.', 'ok');
+    updateToolkitUI();
+    updateGuidance();
+  };
+
+  window.useGauze = function() {
+    if (state.finished) return;
+    checkGlovesSafety('הנחת גזה סטרילית');
+    if (state.gauzeLayers === 0) {
+      state.gauzeLayers = 1;
+      state.gauzeSaturation = 0.08;
+      if (state.firstGauzeTimeSec === null) state.firstGauzeTimeSec = state.elapsedSec;
+      addLog('הונחה גזה סטרילית ישירות על הפצע', 'good');
+      showToast('🩹 גזה סטרילית הונחה! כעת הפעל לחץ ישיר חזק על הפצע.', 'ok');
+    } else if (state.gauzeLayers < 3) {
+      state.gauzeLayers++;
+      state.gauzeSaturation = Math.max(0.15, state.gauzeSaturation - 0.45);
+      addLog(`הונחה שכבת גזה סטרילית נוספת (סה"כ ${state.gauzeLayers}) מבלי להסיר את הקודמת`, 'good');
+      showToast(`🩹 שכבת גזה #${state.gauzeLayers} הונחה מעל הקודמת! נכון מאוד — לעולם לא מסירים גזה ספוגה כדי לא לפרק קריש.`, 'ok', 4200);
+    } else {
+      showToast('כבר הונחו 3 שכבות גזה. אם הדם ממשיך לפרוץ — שקול חוסם עורקים CAT או הדק לחץ ישיר!', 'warn', 3800);
+    }
+    updateToolkitUI();
+    updateGuidance();
+  };
+
+  window.toggleDirectPressure = function() {
+    if (state.finished) return;
+    if (!state.directPressureToggle) {
+      checkGlovesSafety('הפעלת לחץ ישיר');
+      state.directPressureToggle = true;
+      if (state.firstPressureTimeSec === null) state.firstPressureTimeSec = state.elapsedSec;
+      if (state.gauzeLayers === 0) {
+        addLog('הופעל לחץ ישיר על הפצע (ללא גזה סטרילית עדיין)', 'warn');
+        showToast('✋ לחץ ישיר פעיל! מומלץ להניח גזה סטרילית מתחת לידך לספיגה וסטריליות.', 'warn');
+      } else {
+        addLog('הופעל לחץ ישיר חזק על הגזה והפצע', 'good');
+        showToast('✋ לחץ ישיר חזק מופעל! ניתן גם ללחוץ ולהחזיק ישירות על הפצע בציור.', 'ok');
+      }
+    } else {
+      state.directPressureToggle = false;
+      addLog('שוחרר לחץ ישיר ידני מהפצע', state.personalBandageOn || isBleedingStopped() ? 'info' : 'warn');
+      if (!state.personalBandageOn && !isBleedingStopped()) {
+        showToast('⚠️ שחררת לחץ ישיר לפני שהדימום נעצר או נחבש!', 'warn');
+      }
+    }
+    updateToolkitUI();
+    updateGuidance();
+  };
+
+  window.toggleElevation = function() {
+    if (state.finished) return;
+    state.elevated = !state.elevated;
+    if (state.elevated) {
+      addLog('הגפה הורמה מעל גובה הלב להפחתת הלחץ ההידרוסטטי', 'good');
+      const sc = SCENARIOS[state.scenarioId];
+      if (sc.hasVenous && !sc.hasArterial) {
+        showToast('⬆️ הגפה מורמת מעל גובה הלב! שים לב כיצד זרימת הדם הוורידית נחלשת מיד.', 'ok', 3800);
+      } else {
+        showToast('⬆️ הגפה מורמת מעל גובה הלב (מסייע בהאטת הדימום לצד לחץ ישיר / CAT).', 'ok', 3400);
+      }
+    } else {
+      addLog('הגפה הורדה חזרה למנח אופקי', 'info');
+    }
+    updateToolkitUI();
+    updateGuidance();
+  };
+
+  window.usePersonalBandage = function() {
+    if (state.finished) return;
+    checkGlovesSafety('הנחת תחבושת אישית');
+    if (state.personalBandageOn) {
+      showToast('תחבושת אישית כבר כרוכה בחוזקה סביב הפצע ✓', 'ok', 2200);
+      return;
+    }
+    if (state.gauzeLayers === 0) {
+      state.gauzeLayers = 1; // Personal bandage includes built-in sterile pad
+    }
+    state.personalBandageOn = true;
+    const sc = SCENARIOS[state.scenarioId];
+    addLog('נחבשה תחבושת אישית (חבישת לחץ) על הפצע', 'good');
+    if (sc.hasArterial && (!state.catPlaced || state.catWindlassTurns < 3)) {
+      showToast('🩹 תחבושת אישית הונחה — אך הדימום העורקי עדיין פורץ דרכה! במצב כזה נדרש חוסם עורקים CAT.', 'warn', 4500);
+    } else {
+      showToast('🩹 תחבושת אישית הונחה בהצלחה ושומרת על לחץ קבוע וכיסוי סטרילי!', 'ok', 3600);
+    }
+    updateToolkitUI();
+    updateGuidance();
+  };
+
+  window.selectCatTool = function() {
+    if (state.finished) return;
+    if (state.catPlaced) {
+      document.getElementById('catControlBar').classList.add('visible');
+      showToast('חוסם העורקים מונח — השתמש בכפתורי ההידוק ורישום השעה בתחתית הציור.', 'info');
+      return;
+    }
+    state.catMode = !state.catMode;
+    const bar = document.getElementById('catControlBar');
+    if (state.catMode) {
+      bar.classList.add('visible');
+      document.getElementById('catBarTitle').textContent = 'בחירת מיקום לחוסם עורקים CAT:';
+      document.getElementById('catBarMsg').textContent = 'לחץ ישירות על האמה בציור — 5–7 ס"מ מעל הפצע (לכיוון המרפק/ימין, לא על מפרק!)';
+      document.getElementById('catActionBtns').style.display = 'none';
+      showToast('🎯 לחץ על האמה בציור במקום הנכון להנחת חוסם עורקים CAT (פרוקסימלית לפצע — לכיוון הלב).', 'info', 4200);
+    } else {
+      bar.classList.remove('visible');
+    }
+    updateToolkitUI();
+  };
+
+  function handleCatPlacementClick(fx, fy) {
+    // Forearm spans roughly x = 140 (wrist) to 760 (elbow). Wound is centered at x = 435 (width ~220 -> 325..545)
+    // Correct proximal zone: between wound right edge and elbow joint: x = 550..695, y inside arm (190..335)
+    if (fy < 165 || fy > 355 || fx < 110 || fx > 820) {
+      showToast('לחץ ישירות על גוף האמה כדי להניח את חוסם העורקים.', 'warn');
+      return;
+    }
+    if (fx < 325) {
+      state.catWrongAttempts++;
+      addLog('ניסיון שגוי: הנחת CAT מתחת לפצע (דיסטלית)', 'bad');
+      showToast('❌ שגיאה אנטומית! הנחת את החוסם מתחת לפצע (לכיוון כף היד). הדם העורקי מגיע מהלב (ימין) — לכן חובה להניח מעל הפצע!', 'err', 5000);
+      return;
+    }
+    if (fx >= 325 && fx < 548) {
+      state.catWrongAttempts++;
+      addLog('ניסיון שגוי: הנחת CAT ישירות על אזור הפצע', 'bad');
+      showToast('❌ לא מניחים חוסם עורקים ישירות על הפצע! הנח אותו 5–7 ס"מ מעל הפצע (מימין לפצע, לכיוון המרפק).', 'err', 4600);
+      return;
+    }
+    if (fx > 705) {
+      state.catWrongAttempts++;
+      addLog('ניסיון שגוי: הנחת CAT על מפרק המרפק', 'bad');
+      showToast('❌ אסור להניח חוסם עורקים על מפרק (מרפק)! העצמות במפרק מונעות דחיסת העורק. הנח על האמה מעל הפצע.', 'err', 4800);
+      return;
+    }
+
+    // Valid proximal placement!
+    checkGlovesSafety('הנחת חוסם עורקים CAT');
+    state.catPlaced = true;
+    state.catMode = false;
+    state.catX = Math.max(575, Math.min(665, fx));
+    state.catWindlassTurns = 0;
+
+    const sc = SCENARIOS[state.scenarioId];
+    if (!sc.needsTourniquet) {
+      addLog('הונח חוסם עורקים CAT מעל הפצע (שים לב: בדימום ורידי לרוב מספיק לחץ ישיר)', 'warn');
+      showToast('⚠️ חוסם CAT הונח במיקום אנטומי נכון — אך זכור שבדימום ורידי שאינו פורץ עדיף לעצור בלחץ ישיר והרמת גפה!', 'warn', 5000);
+    } else {
+      addLog('הונח חוסם עורקים CAT במיקום תקין (5–7 ס"מ מעל הפצע, פרוקסימלית)', 'good');
+      showToast('✅ מיקום מושלם! כעת סובב את מקל ההידוק (Windlass) עד עצירת הדימום המוחלטת ורשום שעת הנחה.', 'ok', 4400);
+    }
+
+    updateCatBarUI();
+    updateToolkitUI();
+    updateGuidance();
+  }
+
+  window.adjustWindlass = function(delta) {
+    if (!state.catPlaced || state.finished) return;
+    const prev = state.catWindlassTurns;
+    state.catWindlassTurns = Math.max(0, Math.min(3, state.catWindlassTurns + delta));
+    if (state.catWindlassTurns === prev) return;
+
+    if (delta > 0) {
+      if (state.catWindlassTurns === 1) {
+        addLog('הידוק CAT — סיבוב 1 (לחץ ~65 ממ"כ — הדימום נחלש חלקית)', 'info');
+        showToast('סיבוב 1: הלחץ חלקי — העורק עדיין מתגבר בשיא הפעימה. הדק עוד!', 'warn');
+      } else if (state.catWindlassTurns === 2) {
+        addLog('הידוק CAT — סיבוב 2 (לחץ ~115 ממ"כ — דימום מוחלש מאוד)', 'info');
+        showToast('סיבוב 2: כמעט חסום! עדיין יש דליפה בסיסטולה — סיבוב נוסף לעצירה מוחלטת.', 'warn');
+      } else if (state.catWindlassTurns === 3) {
+        if (state.catStoppedTimeSec === null) state.catStoppedTimeSec = state.elapsedSec;
+        addLog('הידוק CAT — סיבוב 3 (חסימה מלאה > 170 ממ"כ — הדימום נעצר!)', 'good');
+        showToast('🛑 חסימה עורקית מלאה! שים לב שהעורק הפסיק לפעום והדימום נעצר. אל תשכח לרשום שעת הנחה!', 'ok', 4500);
+      }
+    } else {
+      addLog(`שחרור חלקי של מקל ההידוק (${state.catWindlassTurns}/3)`, 'warn');
+      if (state.catWindlassTurns < 3 && SCENARIOS[state.scenarioId].hasArterial) {
+        showToast('⚠️ זהירות! במע"ר לעולם לא משחררים חוסם עורקים לאחר שעצר דימום פורץ — הדימום התחדש!', 'err', 4200);
+      }
+    }
+    updateCatBarUI();
+    updateToolkitUI();
+    updateGuidance();
+  };
+
+  window.stampCatTime = function() {
+    if (!state.catPlaced || state.finished) return;
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    state.catTimeStamped = `${hh}:${mm}`;
+    addLog(`נרשמה שעת הנחת חוסם העורקים על התווית: ${state.catTimeStamped}`, 'good');
+    showToast(`🕒 שעת ההנחה (${state.catTimeStamped}) נרשמה! מידע קריטי לצוות מד"א ולחדר הניתוח.`, 'ok', 3800);
+    updateCatBarUI();
+    updateToolkitUI();
+    updateGuidance();
+  };
+
+  function updateCatBarUI() {
+    const bar = document.getElementById('catControlBar');
+    if (!state.catPlaced && !state.catMode) {
+      bar.classList.remove('visible');
+      return;
+    }
+    bar.classList.add('visible');
+    if (state.catPlaced) {
+      document.getElementById('catActionBtns').style.display = 'flex';
+      document.getElementById('windlassCount').textContent = state.catWindlassTurns;
+      document.getElementById('btnWindlassUp').disabled = state.catWindlassTurns >= 3;
+      document.getElementById('btnWindlassDown').disabled = state.catWindlassTurns <= 0;
+      const tBtn = document.getElementById('btnCatTime');
+      if (state.catTimeStamped) {
+        tBtn.textContent = `✓ שעה נרשמה (${state.catTimeStamped})`;
+        tBtn.classList.add('stamped');
+      } else {
+        tBtn.textContent = '🕒 רשום שעת הנחה';
+        tBtn.classList.remove('stamped');
+      }
+      const pressureMap = [15, 65, 115, 185];
+      document.getElementById('catBarTitle').textContent = `חוסם עורקים CAT (לחץ חסימה: ~${pressureMap[state.catWindlassTurns]} ממ"כ):`;
+      document.getElementById('catBarMsg').textContent =
+        state.catWindlassTurns < 3
+          ? 'הדק את מקל ההידוק עד שהדימום נפסק לחלוטין'
+          : (state.catTimeStamped ? 'מהודק היטב ונעול + שעה רשומה ✓' : 'הדימום נעצר! כעת רשום את שעת ההנחה ←');
+    }
+  }
+
+  window.useTriangle = function() {
+    if (state.finished) return;
+    if (!isBleedingStopped() && state.currentBleedRateMlSec > 2.5) {
+      showToast('⚠️ עצור קודם את הדימום הפעיל לפני קיבוע היד במשולש בד!', 'warn', 3600);
+      addLog('ניסיון קיבוע במשולש בד לפני עצירת הדימום', 'warn');
+      return;
+    }
+    state.triangleOn = true;
+    state.elevated = true; // Sling supports elevated forearm
+    addLog('הונח משולש בד (מתלה) לקיבוע ותמיכת האמה המוגבהת', 'good');
+    showToast('🔺 האמה מקובעת בנוחות במשולש בד! המשך לעקוב אחר המדדים עד הגעת מד"א.', 'ok', 3600);
+    updateToolkitUI();
+    updateGuidance();
+  };
+
+  window.openMdaModal = function() {
+    if (state.finished) return;
+    if (state.mdaCalled) {
+      showToast(`🚑 אמבולנס מד"א כבר בדרך! זמן הגעה משוער: ${formatClock(Math.max(0, state.mdaEtaSec))}`, 'info');
+      return;
+    }
+    const sc = SCENARIOS[state.scenarioId];
+    document.getElementById('mdaReportBleed').textContent = sc.shortType;
+    document.getElementById('mdaReportAvpu').textContent = getAvpuLabel(state.avpu);
+    document.getElementById('mdaModal').classList.add('open');
+  };
+
+  window.closeMdaModal = function() {
+    document.getElementById('mdaModal').classList.remove('open');
+  };
+
+  window.confirmMdaCall = function() {
+    closeMdaModal();
+    state.mdaCalled = true;
+    state.mdaCallTimeSec = state.elapsedSec;
+    state.mdaEtaSec = 110; // simulated arrival countdown
+    addLog('הוזעק מד"א 101 ונמסר דיווח מלא על מצב הפצוע', 'good');
+    showToast('🚑 מד"א 101 הוזנק! אמבולנס בדרך — המשך בטיפול ובמעקב אחר המדדים.', 'ok', 3800);
+    updateToolkitUI();
+    updateGuidance();
+  };
+
+  /* =========================================================
+     8. MODE, SCENARIO & VIEW CONTROLS
+     ========================================================= */
+  window.setMode = function(mode) {
+    state = createFreshState(mode, state.scenarioId);
+    particles = [];
+    rivulets = [];
+    initEcgBuffer();
+    document.getElementById('eventLog').innerHTML = '';
+    document.getElementById('btnModeLearn').className = mode === 'learn' ? 'active' : '';
+    document.getElementById('btnModePractice').className = mode === 'practice' ? 'active-practice' : '';
+    document.getElementById('chipLabels').classList.toggle('on', state.showLabels);
+    document.getElementById('btnSpeed').textContent = `⚡ ×${state.speed}`;
+    document.getElementById('inspectHint').textContent = mode === 'learn' ? 'לחץ על כל שכבה להסבר מלא' : 'חקירת שכבות זמינה גם כאן';
+    document.getElementById('catControlBar').classList.remove('visible');
+    closeAnatomyCard();
+    addLog(mode === 'learn' ? 'התחלת תרגול במצב לימוד מונחה (SABCDE)' : 'התחלת סימולציה עצמאית במצב תרגול — בהצלחה!', 'info');
+    updateToolkitUI();
+    updateGuidance();
+    updateVitalsUI();
+  };
+
+  window.changeScenario = function(scId) {
+    state = createFreshState(state.mode, scId);
+    particles = [];
+    rivulets = [];
+    initEcgBuffer();
+    document.getElementById('eventLog').innerHTML = '';
+    document.getElementById('catControlBar').classList.remove('visible');
+    closeAnatomyCard();
+    addLog(`נבחר תרחיש: ${SCENARIOS[scId].title}`, 'info');
+    updateToolkitUI();
+    updateGuidance();
+    updateVitalsUI();
+  };
+
+  window.resetSimulation = function() {
+    closeDebrief();
+    changeScenario(state.scenarioId);
+  };
+
+  window.togglePause = function() {
+    if (state.finished) return;
+    state.paused = !state.paused;
+    const btn = document.getElementById('btnPause');
+    btn.textContent = state.paused ? '▶ המשך' : '⏸ השהה';
+    btn.classList.toggle('active-toggle', state.paused);
+  };
+
+  window.cycleSpeed = function() {
+    const speeds = [0.5, 1.0, 2.0];
+    const idx = speeds.findIndex(s => Math.abs(s - state.speed) < 0.2);
+    state.speed = speeds[(idx + 1) % speeds.length];
+    document.getElementById('btnSpeed').textContent = `⚡ ×${state.speed}`;
+  };
+
+  window.toggleLabels = function() {
+    state.showLabels = !state.showLabels;
+    document.getElementById('chipLabels').classList.toggle('on', state.showLabels);
+  };
+
+  window.toggleZoom = function() {
+    state.zoomed = !state.zoomed;
+    document.getElementById('chipZoom').classList.toggle('on', state.zoomed);
+    document.getElementById('chipZoom').textContent = state.zoomed ? '🔭 מבט מלא על האמה' : '🔍 זום לפצע';
+  };
+
+  window.toggleCrossSection = function() {
+    state.showCrossSection = !state.showCrossSection;
+    document.getElementById('chipCross').classList.toggle('on', state.showCrossSection);
+    document.getElementById('crossSectionBox').classList.toggle('visible', state.showCrossSection);
+  };
+
+  window.inspectLayer = function(layerId) {
+    const info = ANATOMY_DATA[layerId];
+    if (!info) return;
+    state.selectedLayer = layerId;
+    document.getElementById('acSwatch').style.background = info.color;
+    document.getElementById('acName').textContent = info.name;
+    document.getElementById('acLatin').textContent = `(${info.latin})`;
+    document.getElementById('acRole').textContent = info.role;
+    document.getElementById('acBleed').textContent = info.bleed;
+    document.getElementById('acFirstAid').textContent = info.firstAid;
+    document.getElementById('anatomyCard').classList.add('visible');
+
+    document.querySelectorAll('.layer-pill').forEach(p => {
+      p.classList.toggle('selected', p.dataset.layer === layerId);
+    });
+  };
+
+  window.closeAnatomyCard = function() {
+    state.selectedLayer = null;
+    document.getElementById('anatomyCard').classList.remove('visible');
+    document.querySelectorAll('.layer-pill').forEach(p => p.classList.remove('selected'));
+  };
+
+  window.explainProtocolStep = function(letter) {
+    const explanations = {
+      S: 'S — Safety (בטיחות): ודא שהזירה בטוחה לך ולפצוע, לבש כפפות לפני מגע בדם, והזעק מד"א 101.',
+      A: 'A — Airway (נתיב אוויר): בדוק שהפצוע מדבר בבירור — דיבור רציף מעיד על נתיב אוויר פתוח!',
+      B: 'B — Breathing (נשימה): התבונן בקצב הנשימה ובעומקה. עלייה בקצב הנשימה (טכיפנאה) היא סימן מוקדם לאיבוד דם.',
+      C: 'C — Circulation (מחזור דם ודימומים): בדימום עורקי פורץ — עוצרים מיד! לחץ ישיר, גזה, הרמה, תחבושת אישית או CAT במידת הצורך.',
+      D: 'D — Disability (מצב הכרה AVPU): הערך האם הפצוע ערני (A), מגיב לקול (V), לכאב (P) או מחוסר הכרה (U).',
+      E: 'E — Exposure & Evacuation (הפשטה, מניעת היפותרמיה וקיבוע): קבע במשולש בד, שמור על חום גוף הפצוע והמתן למד"א.'
+    };
+    showToast(explanations[letter], 'info', 4800);
+    if (letter === 'A' || letter === 'B') state.abChecked = true;
+  };
+
+  /* =========================================================
+     9. PHYSIOLOGICAL ENGINE & BLEEDING DYNAMICS
+     ========================================================= */
+  function isDirectPressureActive() {
+    return state.directPressureToggle || state.canvasPressing;
+  }
+
+  function isBleedingStopped() {
+    return state.currentBleedRateMlSec < 0.35;
+  }
+
+  // Arterial pressure waveform: 0..1 where peak=1 at systole (phase ~0.16), dicrotic notch at ~0.36
+  function arterialWave(phase) {
+    if (phase < 0.16) {
+      const t = phase / 0.16;
+      return Math.sin(t * Math.PI * 0.5);
+    } else if (phase < 0.35) {
+      const t = (phase - 0.16) / 0.19;
+      return 1.0 - 0.52 * Math.sin(t * Math.PI * 0.5);
+    } else if (phase < 0.48) {
+      // Dicrotic bump
+      const t = (phase - 0.35) / 0.13;
+      return 0.48 + 0.11 * Math.sin(t * Math.PI);
+    } else {
+      const t = (phase - 0.48) / 0.52;
+      return 0.48 * Math.pow(1 - t, 1.55);
+    }
+  }
+
+  // ECG waveform for live monitor canvas
+  function ecgWave(phase) {
+    // P wave (0.06..0.14), QRS complex (0.20..0.30), T wave (0.44..0.62)
+    if (phase > 0.06 && phase < 0.15) {
+      return 0.14 * Math.sin(((phase - 0.06) / 0.09) * Math.PI);
+    }
+    if (phase >= 0.20 && phase < 0.23) {
+      return -0.18 * ((phase - 0.20) / 0.03);
+    }
+    if (phase >= 0.23 && phase < 0.265) {
+      const t = (phase - 0.23) / 0.035;
+      return -0.18 + 1.18 * Math.sin(t * Math.PI);
+    }
+    if (phase >= 0.265 && phase < 0.30) {
+      const t = (phase - 0.265) / 0.035;
+      return -0.26 * Math.sin(t * Math.PI);
+    }
+    if (phase >= 0.43 && phase < 0.62) {
+      return 0.25 * Math.sin(((phase - 0.43) / 0.19) * Math.PI);
+    }
+    return 0;
+  }
+
+  function stepSimulation(dtReal) {
+    if (state.paused || state.finished) return;
+    const dt = dtReal * state.speed;
+    state.elapsedSec += dt;
+
+    const sc = SCENARIOS[state.scenarioId];
+
+    // Smoothly ramp manual direct pressure strength
+    const targetPressure = isDirectPressureActive() ? 1.0 : 0.0;
+    state.pressureStrength += (targetPressure - state.pressureStrength) * Math.min(1, dtReal * 8);
+
+    // Smooth elevation tilt
+    const targetElev = state.elevated ? 0.31 : 0.0;
+    state.elevationAngle += (targetElev - state.elevationAngle) * Math.min(1, dtReal * 5);
+
+    // Smooth zoom
+    const targetZoom = state.zoomed ? 1.52 : 1.0;
+    state.zoomLevel += (targetZoom - state.zoomLevel) * Math.min(1, dtReal * 6);
+
+    // Compute Tourniquet Occlusion Pressure (mmHg)
+    const catPressureTable = [0, 65, 115, 185];
+    const catOcclusion = state.catPlaced ? catPressureTable[state.catWindlassTurns] : 0;
+
+    // Arterial Bleeding Calculation
+    let artRate = 0;
+    if (sc.hasArterial) {
+      // Base rate modulated by current SBP (lower BP = weaker spurting)
+      const bpFactor = Math.max(0.32, state.sbp / 122);
+      artRate = sc.baseArterialRate * bpFactor;
+
+      // CAT occlusion vs Systolic BP
+      if (catOcclusion > 0) {
+        if (catOcclusion >= state.sbp + 15) {
+          artRate = 0; // Complete arterial occlusion!
+        } else {
+          const remainRatio = Math.max(0, 1 - (catOcclusion / (state.sbp + 15)));
+          artRate *= Math.pow(remainRatio, 1.35);
+        }
+      }
+
+      // Direct Pressure & Personal Bandage damping on arterial flow
+      if (artRate > 0) {
+        let damp = 1.0;
+        const gauzeBonus = state.gauzeLayers > 0 ? 0.10 + state.gauzeLayers * 0.04 : 0;
+        if (state.pressureStrength > 0.05) {
+          // Firm direct pressure strongly slows arterial flow (~76-82%), buying precious time
+          damp *= (1 - state.pressureStrength * (0.68 + gauzeBonus));
+        }
+        if (state.personalBandageOn) {
+          // Personal bandage adds steady compression (~60% alone, more with manual pressure)
+          damp *= state.pressureStrength > 0.4 ? 0.78 : 0.42;
+        }
+        if (state.elevated) damp *= 0.88;
+        artRate *= damp;
+      }
+    }
+
+    // Venous Bleeding Calculation
+    let venRate = 0;
+    if (sc.hasVenous) {
+      const bpFactor = Math.max(0.4, state.sbp / 122);
+      venRate = sc.baseVenousRate * bpFactor;
+
+      // Tourniquet at >=2 turns also blocks distal venous return/inflow completely
+      if (catOcclusion >= 110) {
+        venRate = 0;
+      } else {
+        if (state.elevated) venRate *= 0.62; // Gravity greatly helps venous bleeding!
+
+        const hasCompression = (state.pressureStrength > 0.5 && state.gauzeLayers > 0) || state.personalBandageOn;
+        if (state.pressureStrength > 0.05) {
+          const gauzeBoost = state.gauzeLayers > 0 ? 0.88 : 0.70;
+          venRate *= (1 - state.pressureStrength * gauzeBoost);
+        }
+        if (state.personalBandageOn) {
+          venRate *= 0.14;
+        }
+
+        // Clotting mechanism for controllable venous bleed under sustained compression
+        if (hasCompression && venRate < 2.2) {
+          state.clotProgress = Math.min(1, state.clotProgress + dt * 0.09);
+        } else if (!hasCompression && state.clotProgress < 0.85) {
+          state.clotProgress = Math.max(0, state.clotProgress - dt * 0.06);
+        }
+        venRate *= (1 - state.clotProgress);
+        if (state.clotProgress >= 0.92 && state.personalBandageOn) venRate = 0;
+      }
+    }
+
+    state.arterialBleedRate = artRate;
+    state.venousBleedRate = venRate;
+    state.currentBleedRateMlSec = artRate + venRate;
+
+    // Accumulate blood loss
+    state.bloodLostMl = Math.min(TOTAL_BLOOD_VOLUME * 0.52, state.bloodLostMl + state.currentBleedRateMlSec * dt);
+
+    // Track moment bleeding became controlled
+    if (isBleedingStopped() && state.bleedingStoppedAtSec === null && state.elapsedSec > 1) {
+      state.bleedingStoppedAtSec = state.elapsedSec;
+      addLog('✅ הדימום הפעיל נעצר בהצלחה!', 'good');
+      showToast('🎉 הדימום נעצר! המשך לחבישה/קיבוע ומעקב אחר מדדי הפצוע עד הגעת מד"א.', 'ok', 4200);
+      updateGuidance();
+    } else if (!isBleedingStopped() && state.bleedingStoppedAtSec !== null) {
+      state.bleedingStoppedAtSec = null;
+    }
+
+    // Gauze blood saturation progression
+    if (state.gauzeLayers > 0 && state.currentBleedRateMlSec > 0.4) {
+      const soakRate = (state.currentBleedRateMlSec / (18 * state.gauzeLayers)) * dt;
+      const prevSat = state.gauzeSaturation;
+      state.gauzeSaturation = Math.min(1, state.gauzeSaturation + soakRate);
+      if (prevSat < 0.82 && state.gauzeSaturation >= 0.82) {
+        addLog('הגזה נספגה בדם! (זכור: לא מסירים — מוסיפים שכבה או עוברים לחוסם עורקים)', 'warn');
+        if (state.mode === 'learn') {
+          showToast('🩸 הגזה נספגה בדם! אל תסיר אותה — הנח שכבת גזה נוספת, ואם הדימום עורקי ופורץ השתמש בחוסם CAT!', 'warn', 4800);
+        }
+      }
+    }
+
+    // Wound pool visual level
+    const targetPool = isBleedingStopped() ? 0.25 : Math.min(1, 0.35 + state.currentBleedRateMlSec / 18);
+    state.woundPoolLevel += (targetPool - state.woundPoolLevel) * Math.min(1, dtReal * 1.5);
+
+    // Compute Target Physiological Vitals from Blood Loss Percentage
+    const lossPct = (state.bloodLostMl / TOTAL_BLOOD_VOLUME) * 100;
+    const controlledCalm = isBleedingStopped() ? 1 : 0;
+
+    let targetHR, targetRR, targetSBP, targetDBP, newAvpu;
+
+    if (lossPct < 15) {
+      // Class I: Compensated
+      const t = lossPct / 15;
+      targetHR = 76 + t * 22 - controlledCalm * 4;
+      targetRR = 15 + t * 4 - controlledCalm * 1;
+      targetSBP = 122 - t * 4;
+      targetDBP = 78 + t * 2; // Mild vasoconstriction narrows pulse pressure slightly
+      newAvpu = 'A';
+    } else if (lossPct < 30) {
+      // Class II: Mild-Moderate Compensated -> Early Decompensation
+      const t = (lossPct - 15) / 15;
+      targetHR = 98 + t * 26 - controlledCalm * 5;
+      targetRR = 19 + t * 8 - controlledCalm * 1.5;
+      targetSBP = 118 - t * 18;
+      targetDBP = 80 - t * 8;
+      newAvpu = lossPct < 21 ? 'A' : 'V';
+    } else if (lossPct < 40) {
+      // Class III: Decompensated Shock
+      const t = (lossPct - 30) / 10;
+      targetHR = 124 + t * 20 - controlledCalm * 4;
+      targetRR = 27 + t * 8 - controlledCalm * 1.5;
+      targetSBP = 100 - t * 24;
+      targetDBP = 72 - t * 20;
+      newAvpu = 'P';
+    } else {
+      // Class IV: Severe Critical Hypovolemic Shock
+      const t = Math.min(1, (lossPct - 40) / 10);
+      targetHR = 144 + (t < 0.65 ? t * 18 : 12 - (t - 0.65) * 65); // pre-terminal bradycardia near 50%
+      targetRR = 35 + t * 6;
+      targetSBP = 76 - t * 26;
+      targetDBP = 52 - t * 20;
+      newAvpu = 'U';
+    }
+
+    // Smooth vitals transition
+    const lerpRate = Math.min(1, dtReal * 1.4);
+    state.hr += (targetHR - state.hr) * lerpRate;
+    state.rr += (targetRR - state.rr) * lerpRate;
+    state.sbp += (targetSBP - state.sbp) * lerpRate;
+    state.dbp += (targetDBP - state.dbp) * lerpRate;
+
+    if (newAvpu !== state.avpu) {
+      const order = { A: 0, V: 1, P: 2, U: 3 };
+      const worse = order[newAvpu] > order[state.avpu];
+      state.avpu = newAvpu;
+      addLog(`שינוי ברמת ההכרה (AVPU): ${getAvpuLabel(newAvpu)}`, worse ? 'bad' : 'good');
+      if (worse) {
+        showToast(`⚠️ ירידה ברמת ההכרה! הפצוע עבר למצב: ${getAvpuLabel(newAvpu)}`, 'err', 4200);
+      }
+    }
+
+    // Advance Heartbeat Phase & Trigger Beep
+    const beatsPerSec = Math.max(0.5, state.hr / 60);
+    state.pulsePhase += beatsPerSec * dtReal;
+    const currentBeatIdx = Math.floor(state.pulsePhase);
+    if (currentBeatIdx !== lastBeatIndex) {
+      lastBeatIndex = currentBeatIdx;
+      playHeartbeatBeep(state.sbp);
+    }
+    const phaseFrac = state.pulsePhase % 1;
+
+    // Push ECG sample
+    const ecgVal = ecgWave(phaseFrac) + (Math.random() - 0.5) * 0.025;
+    ecgBuffer.push(ecgVal);
+    if (ecgBuffer.length > 220) ecgBuffer.shift();
+
+    // MDA Ambulance ETA Countdown
+    if (state.mdaCalled && !state.mdaArrived) {
+      // Gently accelerate ETA once bleeding is controlled so user reaches debrief naturally
+      const etaRate = isBleedingStopped() ? dt * 2.4 : dt;
+      state.mdaEtaSec = Math.max(0, state.mdaEtaSec - etaRate);
+      if (state.mdaEtaSec <= 0) {
+        state.mdaArrived = true;
+        addLog('🚑 צוות מד"א הגיע לזירה וממשיך את הטיפול והפינוי!', 'good');
+        showToast('🚑 אמבולנס מד"א הגיע לזירה! עוברים לתחקיר הרפואי...', 'ok', 3500);
+        setTimeout(() => {
+          if (!state.finished) openDebrief(false);
+        }, 1800);
+      }
+    }
+
+    // Critical Failure Check (50% blood loss)
+    if (lossPct >= 50 && !state.finished) {
+      state.collapsed = true;
+      addLog('❌ הפצוע נכנס להלם היפוולמי בלתי-הפיך (איבוד >50% מנפח הדם)', 'bad');
+      openDebrief(true);
+    }
+
+    // Spawn Blood Particles (Physically accurate!)
+    spawnBloodParticles(dtReal, phaseFrac);
+    updateBloodParticles(dtReal);
+  }
+
+  /* =========================================================
+     10. BLOOD PARTICLE & FLUID PHYSICS ENGINE
+     ========================================================= */
+  function forearmToWorld(fx, fy) {
+    // Applies elevation rotation around elbow pivot (in logical 880x510 canvas coords)
+    const cos = Math.cos(state.elevationAngle);
+    const sin = Math.sin(state.elevationAngle);
+    const dx = fx - PIVOT_X;
+    const dy = fy - PIVOT_Y;
+    return {
+      x: PIVOT_X + dx * cos - dy * sin,
+      y: PIVOT_Y + dx * sin + dy * cos
+    };
+  }
+
+  function spawnBloodParticles(dt, phase) {
+    const wave = arterialWave(phase);
+
+    // 1. Arterial Pulsatile Spurting (Bright Red, Synchronized to Systolic Pulse!)
+    if (state.arterialBleedRate > 0.25) {
+      const origin = forearmToWorld(WOUND_X - 6, WOUND_Y - 22);
+      const strength = Math.min(1.4, state.arterialBleedRate / 15.0);
+      // Pulsatile emission peaks dramatically during systole
+      const pulsePower = 0.18 + Math.pow(wave, 1.45) * 1.35;
+      const emitCount = Math.floor(pulsePower * strength * 95 * dt + Math.random());
+
+      // When gauze/bandage covers wound, blood seeps/oozes around margins rather than free high arcs
+      const covered = state.gauzeLayers > 0 || state.personalBandageOn;
+      for (let i = 0; i < emitCount; i++) {
+        const baseAngle = covered ? (-Math.PI * 0.5 + (Math.random() - 0.5) * 2.5) : (-Math.PI * 0.62 + (Math.random() - 0.5) * 0.34);
+        const speed = covered
+          ? (25 + Math.random() * 55) * strength * (0.4 + wave * 0.6)
+          : (145 + wave * 250 + Math.random() * 65) * Math.max(0.45, strength);
+
+        particles.push({
+          type: 'arterial',
+          x: origin.x + (Math.random() - 0.5) * (covered ? 24 : 5),
+          y: origin.y + (Math.random() - 0.5) * (covered ? 14 : 4),
+          vx: Math.cos(baseAngle) * speed,
+          vy: Math.sin(baseAngle) * speed,
+          r: covered ? (1.8 + Math.random() * 2.2) : (2.1 + wave * 2.3 + Math.random() * 1.4),
+          life: 0,
+          maxLife: covered ? (0.45 + Math.random() * 0.45) : (0.75 + Math.random() * 0.65)
+        });
+      }
+    }
+
+    // 2. Venous Steady Dark Flow (Continuous, Non-Pulsatile)
+    if (state.venousBleedRate > 0.2) {
+      const origin = forearmToWorld(WOUND_X + 14, WOUND_Y + 23);
+      const strength = Math.min(1.3, state.venousBleedRate / 10.0);
+      const emitCount = Math.floor(strength * 42 * dt + Math.random() * 0.8);
+      for (let i = 0; i < emitCount; i++) {
+        particles.push({
+          type: 'venous',
+          x: origin.x + (Math.random() - 0.5) * 18,
+          y: origin.y + (Math.random() - 0.5) * 8,
+          vx: (Math.random() - 0.5) * 26,
+          vy: 14 + Math.random() * 34 * strength,
+          r: 2.6 + Math.random() * 2.4,
+          life: 0,
+          maxLife: 0.75 + Math.random() * 0.65
+        });
+      }
+    }
+
+    // 3. Running Blood Rivulets down the lower skin edge
+    if (state.currentBleedRateMlSec > 1.2 && Math.random() < dt * Math.min(4.5, state.currentBleedRateMlSec * 0.25)) {
+      if (rivulets.length < 34) {
+        const isArt = state.arterialBleedRate > state.venousBleedRate;
+        const startFx = WOUND_X - 55 + Math.random() * 115;
+        rivulets.push({
+          fx: startFx,
+          fy: WOUND_Y + 42 + Math.random() * 12,
+          len: 8,
+          maxLen: 48 + Math.random() * 68,
+          width: 2.2 + Math.random() * 2.4,
+          speed: 14 + Math.random() * 20,
+          type: isArt ? 'arterial' : 'venous',
+          alpha: 0.85
+        });
+      }
+    }
+  }
+
+  function updateBloodParticles(dt) {
+    const gravity = 520;
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.life += dt;
+      if (p.life >= p.maxLife || p.y > LOGICAL_H + 15) {
+        particles.splice(i, 1);
+        continue;
+      }
+      p.vy += (p.type === 'arterial' ? gravity : gravity * 0.32) * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+    }
+
+    for (let i = rivulets.length - 1; i >= 0; i--) {
+      const r = rivulets[i];
+      if (r.len < r.maxLen && !isBleedingStopped()) {
+        r.len += r.speed * dt;
+      } else if (isBleedingStopped()) {
+        r.alpha -= dt * 0.04; // slowly dries/fades slightly
+        if (r.alpha < 0.25) r.alpha = 0.25;
+      }
+    }
+  }
+
+  /* =========================================================
+     11. REALISTIC ANATOMICAL CANVAS RENDERER
+     ========================================================= */
+  function getCanvasTransformParams() {
+    const sx = canvas.width / LOGICAL_W;
+    const sy = canvas.height / LOGICAL_H;
+    const scaleFit = Math.min(sx, sy);
+    const offsetX = (canvas.width - LOGICAL_W * scaleFit) * 0.5;
+    const offsetY = (canvas.height - LOGICAL_H * scaleFit) * 0.5;
+    return { scaleFit, offsetX, offsetY };
+  }
+
+  function screenToForearmLocal(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const dprX = (clientX - rect.left) * (canvas.width / rect.width);
+    const dprY = (clientY - rect.top) * (canvas.height / rect.height);
+    const { scaleFit, offsetX, offsetY } = getCanvasTransformParams();
+
+    // Logical canvas coordinates
+    let lx = (dprX - offsetX) / scaleFit;
+    let ly = (dprY - offsetY) / scaleFit;
+
+    // Undo zoom around wound center
+    const z = state.zoomLevel;
+    lx = (lx - LOGICAL_W * 0.5) / z + WOUND_X + (LOGICAL_W * 0.5 - WOUND_X) / z;
+    ly = (ly - LOGICAL_H * 0.5) / z + WOUND_Y + (LOGICAL_H * 0.5 - WOUND_Y) / z;
+
+    // Undo elevation rotation around elbow pivot
+    const dx = lx - PIVOT_X;
+    const dy = ly - PIVOT_Y;
+    const cos = Math.cos(-state.elevationAngle);
+    const sin = Math.sin(-state.elevationAngle);
+    return {
+      x: PIVOT_X + dx * cos - dy * sin,
+      y: PIVOT_Y + dx * sin + dy * cos,
+      logicalX: lx,
+      logicalY: ly
+    };
+  }
+
+  function hitTestAnatomicalLayer(fx, fy) {
+    // Coordinates relative to wound center (WOUND_X, WOUND_Y), unrotated slightly (-5 deg)
+    const ang = 0.085;
+    const rx = (fx - WOUND_X) * Math.cos(ang) - (fy - WOUND_Y) * Math.sin(ang);
+    const ry = (fx - WOUND_X) * Math.sin(ang) + (fy - WOUND_Y) * Math.cos(ang);
+
+    const outerEll = (rx * rx) / (118 * 118) + (ry * ry) / (68 * 68);
+    if (outerEll > 1.25) {
+      // Intact forearm skin = epidermis
+      if (fx > 110 && fx < 820 && fy > 160 && fy < 365) return 'epidermis';
+      return null;
+    }
+
+    // Inside wound area — test front/specific structures first!
+    // 1. Pulsing Radial Artery (y around -21)
+    if (Math.abs(rx) < 88 && Math.abs(ry - (-21 + Math.sin(rx * 0.025) * 3)) < 11) return 'artery';
+
+    // 2. Forearm Vein (y around +24)
+    if (Math.abs(rx) < 86 && Math.abs(ry - (24 + Math.cos(rx * 0.024) * 3)) < 12) return 'vein';
+
+    // 3. White Tendons (y around -2 and +10)
+    if (Math.abs(rx) < 86 && (Math.abs(ry + 2) < 6.5 || Math.abs(ry - 10) < 5.5)) return 'tendon';
+
+    // 4. Muscle bed (deep central cavity)
+    const muscleEll = (rx * rx) / (86 * 86) + (ry * ry) / (41 * 41);
+    if (muscleEll <= 1.0) return 'muscle';
+
+    // 5. Subcutaneous Fat ring
+    const fatEll = (rx * rx) / (102 * 102) + (ry * ry) / (53 * 53);
+    if (fatEll <= 1.0) return 'fat';
+
+    // 6. Capillaries (localized along upper/lower dermis margin)
+    const dermEll = (rx * rx) / (112 * 112) + (ry * ry) / (61 * 61);
+    if (dermEll <= 1.0) {
+      if (rx > 12 && ry < -28) return 'capillaries';
+      if (rx < -15 && ry > 28) return 'capillaries';
+      return 'dermis';
+    }
+
+    // 7. Epidermis lip
+    return 'epidermis';
+  }
+
+  function renderScene() {
+    ctx.save();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Clinical dark mat background
+    const bgGrad = ctx.createRadialGradient(canvas.width * 0.5, canvas.height * 0.5, 40, canvas.width * 0.5, canvas.height * 0.5, canvas.width * 0.72);
+    bgGrad.addColorStop(0, '#131f36');
+    bgGrad.addColorStop(1, '#070c17');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const { scaleFit, offsetX, offsetY } = getCanvasTransformParams();
+    ctx.translate(offsetX, offsetY);
+    ctx.scale(scaleFit, scaleFit);
+
+    // Subtle medical grid
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.045)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= LOGICAL_W; x += 40) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, LOGICAL_H); ctx.stroke();
+    }
+    for (let y = 0; y <= LOGICAL_H; y += 40) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(LOGICAL_W, y); ctx.stroke();
+    }
+
+    // Apply Smooth Zoom centered toward wound
+    const z = state.zoomLevel;
+    ctx.save();
+    ctx.translate(LOGICAL_W * 0.5, LOGICAL_H * 0.5);
+    ctx.scale(z, z);
+    ctx.translate(-(WOUND_X + (LOGICAL_W * 0.5 - WOUND_X) / z), -(WOUND_Y + (LOGICAL_H * 0.5 - WOUND_Y) / z));
+
+    // Heart Level Reference Line (when limb is elevated)
+    if (state.elevationAngle > 0.04) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, state.elevationAngle * 3.5);
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.55)';
+      ctx.setLineDash([7, 6]);
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(40, 290);
+      ctx.lineTo(840, 290);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#6ee7b7';
+      ctx.font = 'bold 12px "Segoe UI", Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText('❤️ קו גובה הלב — הגפה מורמת להפחתת הלחץ הוורידי', 54, 308);
+      ctx.restore();
+    }
+
+    // Orientation guides with crisp outward vector arrows (Proximal Right -> Elbow/Heart, Distal Left -> Hand)
+    if (!state.zoomed) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.78)';
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.78)';
+      ctx.lineWidth = 1.6;
+      ctx.font = 'bold 12px "Segoe UI", Arial';
+      ctx.textBaseline = 'middle';
+
+      // Right side: outward arrow pointing RIGHT
+      const ry = LOGICAL_H - 20;
+      ctx.textAlign = 'right';
+      ctx.fillText('לכיוון המרפק והלב (פרוקסימלי)', LOGICAL_W - 44, ry);
+      ctx.beginPath();
+      ctx.moveTo(LOGICAL_W - 38, ry);
+      ctx.lineTo(LOGICAL_W - 18, ry);
+      ctx.moveTo(LOGICAL_W - 24, ry - 4.5);
+      ctx.lineTo(LOGICAL_W - 18, ry);
+      ctx.lineTo(LOGICAL_W - 24, ry + 4.5);
+      ctx.stroke();
+
+      // Left side: outward arrow pointing LEFT
+      ctx.textAlign = 'left';
+      ctx.fillText('לכיוון שורש כף היד (דיסטלי)', 44, ry);
+      ctx.beginPath();
+      ctx.moveTo(38, ry);
+      ctx.lineTo(18, ry);
+      ctx.moveTo(24, ry - 4.5);
+      ctx.lineTo(18, ry);
+      ctx.lineTo(24, ry + 4.5);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // ---- BEGIN ELEVATED FOREARM LOCAL SPACE ----
+    ctx.save();
+    ctx.translate(PIVOT_X, PIVOT_Y);
+    ctx.rotate(state.elevationAngle);
+    ctx.translate(-PIVOT_X, -PIVOT_Y);
+
+    drawForearmBase();
+    drawDeepWoundLayers();
+    drawRivulets();
+
+    // CAT Target Placement Zone Guide (when CAT tool selected for placement)
+    if (state.catMode && !state.catPlaced) {
+      ctx.save();
+      const pulse = 0.45 + 0.35 * Math.sin(animTime * 6);
+      ctx.fillStyle = `rgba(245, 158, 11, ${0.14 + pulse * 0.14})`;
+      ctx.strokeStyle = `rgba(251, 191, 36, ${0.65 + pulse * 0.3})`;
+      ctx.lineWidth = 2.2;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.roundRect(560, 152, 130, 224, 14);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#fef3c7';
+      ctx.font = 'bold 12.5px "Segoe UI", Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('לחץ כאן להנחת CAT', 625, 144);
+      ctx.font = '11px "Segoe UI", Arial';
+      ctx.fillText('(5–7 ס"מ מעל הפצע)', 625, 392);
+      ctx.restore();
+    }
+
+    // Applied Equipment Visuals on the Forearm
+    if (state.gauzeLayers > 0) drawSterileGauze();
+    if (state.personalBandageOn) drawPersonalBandage();
+    if (state.catPlaced) drawCatTourniquet();
+    if (state.triangleOn) drawTriangularSling();
+    if (state.pressureStrength > 0.04) drawDirectPressureHands();
+
+    // Layer Hover/Selection Highlight Outline
+    const hl = state.hoveredLayer || state.selectedLayer;
+    if (hl) drawLayerHighlight(hl);
+
+    // Anatomy Callout Labels
+    if (state.showLabels && !state.personalBandageOn) {
+      drawAnatomyCallouts();
+    }
+
+    ctx.restore();
+    // ---- END FOREARM LOCAL SPACE ----
+
+    // World-space Blood Particles (affected by vertical gravity!)
+    drawBloodParticles();
+
+    ctx.restore(); // End zoom
+    ctx.restore(); // End logical scale
+  }
+
+  function drawForearmBase() {
+    ctx.save();
+
+    // Soft shadow beneath forearm
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.beginPath();
+    ctx.ellipse(460, 368, 360, 34, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Forearm + Wrist + Partial Palm/Elbow anatomical contour
+    ctx.beginPath();
+    // Top edge: Right upper forearm (wider flexor mass) tapering smoothly to wrist & thumb base on left
+    ctx.moveTo(860, 142);
+    ctx.bezierCurveTo(750, 144, 650, 154, 520, 166);
+    ctx.bezierCurveTo(380, 179, 255, 192, 175, 200);
+    // Wrist & base of palm / thumb (thenar eminence)
+    ctx.bezierCurveTo(132, 196, 95, 176, 56, 174);
+    ctx.bezierCurveTo(28, 174, 24, 204, 46, 224);
+    ctx.bezierCurveTo(18, 242, 18, 294, 52, 314);
+    ctx.bezierCurveTo(96, 332, 138, 326, 178, 322);
+    // Bottom edge: Wrist broadening back toward elbow
+    ctx.bezierCurveTo(275, 336, 405, 354, 540, 364);
+    ctx.bezierCurveTo(675, 372, 765, 376, 860, 372);
+    ctx.closePath();
+
+    // Cylindrical 3D skin gradient (anterior volar forearm)
+    const skinGrad = ctx.createLinearGradient(0, 145, 0, 375);
+    skinGrad.addColorStop(0.0, '#b57d5d');
+    skinGrad.addColorStop(0.16, '#dca988');
+    skinGrad.addColorStop(0.45, '#ecc1a3');
+    skinGrad.addColorStop(0.75, '#d69e7c');
+    skinGrad.addColorStop(1.0, '#966044');
+    ctx.fillStyle = skinGrad;
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(72, 38, 22, 0.55)';
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+
+    // Clip interior skin details
+    ctx.save();
+    ctx.clip();
+
+    // Subtle elbow fossa crease on right
+    ctx.strokeStyle = 'rgba(120, 68, 44, 0.28)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(745, 165);
+    ctx.quadraticCurveTo(725, 260, 748, 355);
+    ctx.stroke();
+
+    // Wrist flexor creases on left
+    ctx.strokeStyle = 'rgba(130, 75, 48, 0.34)';
+    ctx.lineWidth = 1.8;
+    for (let i = 0; i < 2; i++) {
+      ctx.beginPath();
+      ctx.moveTo(168 - i * 11, 205);
+      ctx.quadraticCurveTo(160 - i * 11, 262, 170 - i * 11, 318);
+      ctx.stroke();
+    }
+
+    // Faint subcutaneous blue veins visible through intact skin leading toward/away from wound
+    ctx.strokeStyle = 'rgba(56, 84, 138, 0.24)';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 5.5;
+    ctx.beginPath();
+    ctx.moveTo(145, 286);
+    ctx.bezierCurveTo(260, 294, 340, 292, 540, 286);
+    ctx.bezierCurveTo(640, 280, 720, 268, 840, 254);
+    ctx.stroke();
+
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(155, 232);
+    ctx.bezierCurveTo(260, 218, 350, 212, 505, 204);
+    ctx.bezierCurveTo(620, 198, 725, 194, 835, 188);
+    ctx.stroke();
+
+    // Subtle skin pores & fine forearm hair texture
+    ctx.strokeStyle = 'rgba(92, 56, 36, 0.16)';
+    ctx.lineWidth = 0.9;
+    for (const d of SKIN_DOTS) {
+      ctx.beginPath();
+      ctx.moveTo(d.x, d.y);
+      ctx.lineTo(d.x + Math.cos(d.ang) * d.len, d.y + Math.sin(d.ang) * d.len);
+      ctx.stroke();
+    }
+
+    // Subtle skin pallor shift as hypovolemic shock progresses!
+    const lossPct = (state.bloodLostMl / TOTAL_BLOOD_VOLUME) * 100;
+    if (lossPct > 12) {
+      const pallor = Math.min(0.42, ((lossPct - 12) / 38) * 0.42);
+      ctx.fillStyle = `rgba(215, 224, 236, ${pallor})`;
+      ctx.fillRect(0, 130, LOGICAL_W, 260);
+    }
+
+    // Slight distal cyanosis/congestion tint when CAT is fully tightened
+    if (state.catPlaced && state.catWindlassTurns >= 2) {
+      const gradC = ctx.createLinearGradient(state.catX, 0, 80, 0);
+      gradC.addColorStop(0, 'rgba(67, 56, 135, 0.04)');
+      gradC.addColorStop(1, 'rgba(76, 65, 140, 0.14)');
+      ctx.fillStyle = gradC;
+      ctx.fillRect(20, 140, state.catX - 20, 250);
+    }
+
+    ctx.restore();
+    ctx.restore();
+  }
+
+  function traceWoundPath(c, rx, ry) {
+    // Organic fusiform laceration shape (wider in center, tapering smoothly to natural laceration corners)
+    c.beginPath();
+    c.moveTo(-rx, 0);
+    c.bezierCurveTo(-rx * 0.72, -ry * 0.95, -rx * 0.25, -ry * 1.06, 0, -ry);
+    c.bezierCurveTo(rx * 0.30, -ry * 1.04, rx * 0.74, -ry * 0.90, rx, 0);
+    c.bezierCurveTo(rx * 0.72, ry * 0.92, rx * 0.28, ry * 1.06, 0, ry);
+    c.bezierCurveTo(-rx * 0.28, ry * 1.04, -rx * 0.72, ry * 0.94, -rx, 0);
+    c.closePath();
+  }
+
+  function drawDeepWoundLayers() {
+    const sc = SCENARIOS[state.scenarioId];
+    const phase = state.pulsePhase % 1;
+    const wave = arterialWave(phase);
+
+    // If CAT is fully tightened proximal to the wound, arterial pulsation in the wound stops!
+    const catBlocked = state.catPlaced && state.catWindlassTurns >= 3;
+    const pulseScale = catBlocked ? 0.04 : (state.catPlaced ? (1 - state.catWindlassTurns * 0.32) : 1.0);
+    const arteryPulsePx = wave * 2.5 * pulseScale * Math.max(0.45, state.sbp / 122);
+
+    ctx.save();
+    ctx.translate(WOUND_X, WOUND_Y);
+    ctx.rotate(-0.085); // Slight realistic oblique forearm laceration angle
+
+    // 1. OUTER EPIDERMIS BEVELLED LIP & SHADOW
+    ctx.save();
+    traceWoundPath(ctx, 124, 72);
+    ctx.fillStyle = 'rgba(75, 22, 18, 0.32)';
+    ctx.fill();
+
+    traceWoundPath(ctx, 118, 67);
+    const epiGrad = ctx.createLinearGradient(0, -67, 0, 67);
+    epiGrad.addColorStop(0, '#c89171');
+    epiGrad.addColorStop(0.5, '#e8be9e');
+    epiGrad.addColorStop(1, '#b87d5e');
+    ctx.fillStyle = epiGrad;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 228, 206, 0.55)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+
+    // 2. DERMIS LAYER (Salmon-pink exposed rim)
+    ctx.save();
+    traceWoundPath(ctx, 113, 62);
+    const dermGrad = ctx.createRadialGradient(0, 0, 32, 0, 0, 115);
+    dermGrad.addColorStop(0, '#c95c55');
+    dermGrad.addColorStop(0.75, '#e2887f');
+    dermGrad.addColorStop(1, '#c4635c');
+    ctx.fillStyle = dermGrad;
+    ctx.fill();
+
+    // 3. CAPILLARY PLEXUS ON DERMIS RIM (fine branching micro-vessels)
+    ctx.save();
+    ctx.clip();
+    drawCapillaryBranch(ctx, 42, -48, 0.45, 1);
+    drawCapillaryBranch(ctx, -56, -42, 0.9, 0.85);
+    drawCapillaryBranch(ctx, -46, 44, -0.7, 0.95);
+    drawCapillaryBranch(ctx, 56, 41, -1.1, 0.85);
+    ctx.restore();
+    ctx.restore();
+
+    // 4. SUBCUTANEOUS ADIPOSE TISSUE (Lobulated golden-yellow fat layer)
+    ctx.save();
+    traceWoundPath(ctx, 104, 54);
+    ctx.fillStyle = '#cf9424';
+    ctx.fill();
+    ctx.clip();
+
+    // Organic fat globules with fibrous septa & highlights
+    for (const lob of FAT_LOBULES) {
+      const g = ctx.createRadialGradient(lob.x - lob.r * 0.3, lob.y - lob.r * 0.3, 1, lob.x, lob.y, lob.r);
+      g.addColorStop(0, lob.shade > 0.5 ? '#ffe794' : '#ffdd73');
+      g.addColorStop(0.7, '#ebb332');
+      g.addColorStop(1, '#b67317');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(lob.x, lob.y, lob.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(176, 58, 46, 0.38)'; // pink fibrous septa
+      ctx.lineWidth = 0.85;
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 5. DEEP WOUND CAVITY: SKELETAL MUSCLE (Flexor Carpi Radialis / Digitorum)
+    ctx.save();
+    traceWoundPath(ctx, 88, 42);
+    const musGrad = ctx.createLinearGradient(0, -42, 0, 42);
+    musGrad.addColorStop(0, '#5a1017');
+    musGrad.addColorStop(0.28, '#961e28');
+    musGrad.addColorStop(0.55, '#ad2934');
+    musGrad.addColorStop(0.85, '#7c1620');
+    musGrad.addColorStop(1, '#490c12');
+    ctx.fillStyle = musGrad;
+    ctx.fill();
+    ctx.clip();
+
+    // Striated longitudinal muscle fibers
+    for (let y = -40; y <= 40; y += 3.6) {
+      ctx.beginPath();
+      ctx.moveTo(-92, y);
+      ctx.bezierCurveTo(-30, y - 3.5, 30, y + 3.5, 92, y);
+      ctx.strokeStyle = (Math.abs(y) % 7 < 3.5) ? 'rgba(220, 78, 86, 0.36)' : 'rgba(55, 8, 12, 0.45)';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+    }
+    // Glistening perimysium/fascia sheen lines
+    ctx.strokeStyle = 'rgba(255, 225, 225, 0.16)';
+    ctx.lineWidth = 1.1;
+    for (let y = -28; y <= 28; y += 14) {
+      ctx.beginPath();
+      ctx.moveTo(-88, y);
+      ctx.quadraticCurveTo(0, y + 4, 88, y - 2);
+      ctx.stroke();
+    }
+
+    // 6. WHITE TENDONS (Pearlescent longitudinal collagen cords)
+    drawWhiteTendon(ctx, -2.5, 6.2);
+    drawWhiteTendon(ctx, 10.5, 4.6);
+
+    // 7. VEIN (Dark Blue-Violet Forearm Vein, thinner-walled)
+    drawForearmVein(ctx, sc.hasVenous);
+
+    // 8. PULSING RADIAL ARTERY (Thick-walled bright red vessel synchronized to HR)
+    drawPulsingArtery(ctx, sc.hasArterial, arteryPulsePx, wave);
+
+    // 9. LIQUID BLOOD POOL inside bottom of cavity
+    const poolAlpha = Math.min(0.75, 0.18 + state.woundPoolLevel * 0.5);
+    const poolColor = sc.hasVenous && !sc.hasArterial
+      ? `rgba(74, 4, 18, ${poolAlpha})`
+      : `rgba(145, 8, 22, ${poolAlpha * 0.85})`;
+    const poolGrad = ctx.createLinearGradient(0, 6, 0, 44);
+    poolGrad.addColorStop(0, 'rgba(120, 5, 18, 0)');
+    poolGrad.addColorStop(0.45, poolColor);
+    poolGrad.addColorStop(1, 'rgba(55, 3, 12, 0.85)');
+    ctx.fillStyle = poolGrad;
+    ctx.fillRect(-95, 2, 190, 45);
+
+    // Glossy specular shine on blood pool
+    ctx.fillStyle = 'rgba(255, 210, 215, 0.22)';
+    ctx.beginPath();
+    ctx.ellipse(8, 30, 32, 4.5, 0.05, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Inner deep cavity shadow cast by overhanging fat/dermis walls
+    ctx.strokeStyle = 'rgba(18, 2, 5, 0.65)';
+    ctx.lineWidth = 8;
+    traceWoundPath(ctx, 89, 43);
+    ctx.stroke();
+
+    ctx.restore(); // End muscle cavity clip
+    ctx.restore(); // End wound transform
+  }
+
+  function drawCapillaryBranch(c, x, y, rot, scale) {
+    c.save();
+    c.translate(x, y);
+    c.rotate(rot);
+    c.scale(scale, scale);
+    c.strokeStyle = 'rgba(225, 29, 72, 0.78)';
+    c.lineCap = 'round';
+    c.lineWidth = 1.2;
+    c.beginPath();
+    c.moveTo(-16, 0); c.quadraticCurveTo(-4, -3, 16, 2);
+    c.moveTo(-5, -1); c.quadraticCurveTo(2, -9, 10, -10);
+    c.moveTo(2, 0); c.quadraticCurveTo(9, 7, 15, 9);
+    c.moveTo(-10, -1); c.quadraticCurveTo(-6, 6, 0, 8);
+    c.stroke();
+    // Subtle pink capillary ooze droplet
+    if (!isBleedingStopped()) {
+      c.fillStyle = 'rgba(244, 63, 94, 0.55)';
+      c.beginPath();
+      c.arc(6, -2, 2.2 + Math.sin(animTime * 2 + x) * 0.5, 0, Math.PI * 2);
+      c.fill();
+    }
+    c.restore();
+  }
+
+  function drawWhiteTendon(c, yCenter, thickness) {
+    c.save();
+    // Shadow beneath tendon
+    c.strokeStyle = 'rgba(35, 5, 8, 0.55)';
+    c.lineWidth = thickness + 3.5;
+    c.beginPath();
+    c.moveTo(-90, yCenter + 2.5);
+    c.bezierCurveTo(-30, yCenter + 1, 30, yCenter + 4, 90, yCenter + 1.5);
+    c.stroke();
+
+    // Pearlescent ivory tendon body
+    const tGrad = c.createLinearGradient(0, yCenter - thickness, 0, yCenter + thickness);
+    tGrad.addColorStop(0, '#c8c0b4');
+    tGrad.addColorStop(0.35, '#fbf9f4');
+    tGrad.addColorStop(0.7, '#e2dbd0');
+    tGrad.addColorStop(1, '#a89f92');
+    c.strokeStyle = tGrad;
+    c.lineWidth = thickness;
+    c.beginPath();
+    c.moveTo(-90, yCenter);
+    c.bezierCurveTo(-30, yCenter - 1.5, 30, yCenter + 1.5, 90, yCenter - 0.5);
+    c.stroke();
+
+    // Fine white collagen specular fiber
+    c.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    c.lineWidth = 1.1;
+    c.beginPath();
+    c.moveTo(-88, yCenter - thickness * 0.18);
+    c.bezierCurveTo(-30, yCenter - 2.2, 30, yCenter + 0.8, 88, yCenter - 1.2);
+    c.stroke();
+    c.restore();
+  }
+
+  function drawForearmVein(c, isLacerated) {
+    c.save();
+    const yBase = 24;
+    // Shadow
+    c.strokeStyle = 'rgba(15, 6, 22, 0.6)';
+    c.lineWidth = 13.5;
+    c.beginPath();
+    c.moveTo(-90, yBase + 2);
+    c.bezierCurveTo(-30, yBase + 6, 30, yBase - 2, 90, yBase + 1);
+    c.stroke();
+
+    // Cylindrical indigo-violet vein body
+    const vGrad = c.createLinearGradient(0, yBase - 8, 0, yBase + 8);
+    vGrad.addColorStop(0, '#2a3363');
+    vGrad.addColorStop(0.32, '#6274ba');
+    vGrad.addColorStop(0.68, '#384682');
+    vGrad.addColorStop(1, '#1c2142');
+    c.strokeStyle = vGrad;
+    c.lineWidth = 10.5;
+    c.beginPath();
+    c.moveTo(-90, yBase);
+    c.bezierCurveTo(-30, yBase + 4, 30, yBase - 4, 90, yBase - 1);
+    c.stroke();
+
+    // Glossy highlight
+    c.strokeStyle = 'rgba(191, 219, 254, 0.35)';
+    c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(-85, yBase - 2.6);
+    c.bezierCurveTo(-30, yBase + 1.2, 30, yBase - 6.6, 85, yBase - 3.6);
+    c.stroke();
+
+    // Venous Laceration Opening & Dark Maroon Well
+    if (isLacerated) {
+      c.fillStyle = '#38020d';
+      c.beginPath();
+      c.ellipse(14, yBase - 1.5, 9.5, 4.4, -0.15, 0, Math.PI * 2);
+      c.fill();
+      c.strokeStyle = '#7f1d38';
+      c.lineWidth = 1.2;
+      c.stroke();
+
+      if (state.venousBleedRate > 0.25) {
+        const swell = 5 + Math.min(7, state.venousBleedRate * 0.65);
+        const wellGrad = ctx.createRadialGradient(14, yBase, 1, 14, yBase + 2, swell * 1.9);
+        wellGrad.addColorStop(0, 'rgba(110, 6, 24, 0.95)');
+        wellGrad.addColorStop(0.65, 'rgba(72, 4, 18, 0.85)');
+        wellGrad.addColorStop(1, 'rgba(72, 4, 18, 0)');
+        c.fillStyle = wellGrad;
+        c.beginPath();
+        c.arc(14, yBase + 2, swell * 1.9, 0, Math.PI * 2);
+        c.fill();
+      }
+    }
+    c.restore();
+  }
+
+  function drawPulsingArtery(c, isLacerated, pulsePx, wave) {
+    c.save();
+    const yBase = -21;
+    const thick = 9.2 + pulsePx;
+
+    // Deep shadow beneath artery
+    c.strokeStyle = 'rgba(28, 3, 6, 0.65)';
+    c.lineWidth = thick + 4;
+    c.beginPath();
+    c.moveTo(-92, yBase + 2.5);
+    c.bezierCurveTo(-30, yBase - 2, 30, yBase + 4, 92, yBase + 1);
+    c.stroke();
+
+    // Elastic smooth-muscle arterial wall (bright coral-crimson, brightens slightly on systole)
+    const aGrad = c.createLinearGradient(0, yBase - 8, 0, yBase + 8);
+    aGrad.addColorStop(0, '#9e1120');
+    aGrad.addColorStop(0.30, pulsePx > 1.2 ? '#ff6b78' : '#f44353');
+    aGrad.addColorStop(0.65, '#d61c2e');
+    aGrad.addColorStop(1, '#750c16');
+    c.strokeStyle = aGrad;
+    c.lineWidth = thick;
+    c.beginPath();
+    c.moveTo(-92, yBase);
+    c.bezierCurveTo(-30, yBase - 4.5, 30, yBase + 1.5, 92, yBase - 1.5);
+    c.stroke();
+
+    // Traveling systolic sheen along vessel wall
+    c.strokeStyle = `rgba(255, 225, 228, ${0.42 + wave * 0.32})`;
+    c.lineWidth = 2.2;
+    c.beginPath();
+    c.moveTo(-88, yBase - thick * 0.24);
+    c.bezierCurveTo(-30, yBase - 4.5 - thick * 0.24, 30, yBase + 1.5 - thick * 0.24, 88, yBase - 1.5 - thick * 0.24);
+    c.stroke();
+
+    // Arterial Laceration Orifice (visibly pulses open on systole!)
+    if (isLacerated) {
+      const gapY = 2.8 + (state.arterialBleedRate > 0.3 ? wave * 2.1 : 0);
+      c.fillStyle = '#4a020a';
+      c.beginPath();
+      c.ellipse(-6, yBase - 1.5, 6.2, gapY, 0.12, 0, Math.PI * 2);
+      c.fill();
+      c.strokeStyle = '#ff9aa2';
+      c.lineWidth = 1.1;
+      c.stroke();
+
+      // Bright arterial pressurized stream base right at the laceration during systole
+      if (state.arterialBleedRate > 0.3 && state.gauzeLayers === 0 && !state.personalBandageOn) {
+        const jetLen = (14 + wave * 42) * Math.min(1.2, state.arterialBleedRate / 14);
+        const jetGrad = c.createLinearGradient(-6, yBase, -6 - jetLen * 0.45, yBase - jetLen);
+        jetGrad.addColorStop(0, 'rgba(255, 30, 42, 0.98)');
+        jetGrad.addColorStop(0.6, 'rgba(255, 48, 58, 0.78)');
+        jetGrad.addColorStop(1, 'rgba(255, 48, 58, 0)');
+        c.strokeStyle = jetGrad;
+        c.lineWidth = 2.2 + wave * 3.0;
+        c.lineCap = 'round';
+        c.beginPath();
+        c.moveTo(-6, yBase - 2);
+        c.quadraticCurveTo(-14, yBase - jetLen * 0.65, -6 - jetLen * 0.42, yBase - jetLen);
+        c.stroke();
+      }
+    }
+    c.restore();
+  }
+
+  function drawRivulets() {
+    ctx.save();
+    ctx.lineCap = 'round';
+    for (const r of rivulets) {
+      ctx.strokeStyle = r.type === 'arterial'
+        ? `rgba(215, 16, 30, ${r.alpha})`
+        : `rgba(88, 6, 22, ${r.alpha})`;
+      ctx.lineWidth = r.width;
+      ctx.beginPath();
+      ctx.moveTo(r.fx, r.fy);
+      ctx.quadraticCurveTo(r.fx + Math.sin(r.fx) * 5, r.fy + r.len * 0.55, r.fx + Math.cos(r.fx) * 4, r.fy + r.len);
+      ctx.stroke();
+      // Hanging drop at tip
+      ctx.fillStyle = ctx.strokeStyle;
+      ctx.beginPath();
+      ctx.arc(r.fx + Math.cos(r.fx) * 4, r.fy + r.len, r.width * 0.72, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawBloodParticles() {
+    ctx.save();
+    for (const p of particles) {
+      const fade = Math.max(0, 1 - p.life / p.maxLife);
+      if (p.type === 'arterial') {
+        // Motion-stretched bright oxygenated arterial droplet
+        ctx.strokeStyle = `rgba(255, 24, 38, ${0.92 * fade})`;
+        ctx.lineWidth = p.r * 1.15;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - p.vx * 0.022, p.y - p.vy * 0.022);
+        ctx.stroke();
+
+        // Glossy specular dot
+        ctx.fillStyle = `rgba(255, 195, 200, ${0.48 * fade})`;
+        ctx.beginPath();
+        ctx.arc(p.x - p.r * 0.2, p.y - p.r * 0.2, p.r * 0.32, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Dark burgundy viscous venous droplet
+        ctx.fillStyle = `rgba(92, 6, 22, ${0.9 * fade})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawSterileGauze() {
+    ctx.save();
+    ctx.translate(WOUND_X, WOUND_Y);
+    for (let layer = 0; layer < state.gauzeLayers; layer++) {
+      ctx.save();
+      ctx.rotate(-0.07 + layer * 0.06);
+      ctx.translate(layer * 3, -layer * 3);
+      const w = 186, h = 128;
+
+      // Soft shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.28)';
+      ctx.beginPath();
+      ctx.roundRect(-w / 2 + 4, -h / 2 + 5, w, h, 8);
+      ctx.fill();
+
+      // White gauze cloth
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.roundRect(-w / 2, -h / 2, w, h, 8);
+      ctx.fill();
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+
+      // Woven grid texture
+      ctx.save();
+      ctx.clip();
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.24)';
+      ctx.lineWidth = 0.8;
+      for (let gx = -w / 2; gx < w / 2; gx += 7) {
+        ctx.beginPath(); ctx.moveTo(gx, -h / 2); ctx.lineTo(gx, h / 2); ctx.stroke();
+      }
+      for (let gy = -h / 2; gy < h / 2; gy += 7) {
+        ctx.beginPath(); ctx.moveTo(-w / 2, gy); ctx.lineTo(w / 2, gy); ctx.stroke();
+      }
+
+      // Spreading blood-soak stain on top layer
+      if (layer === state.gauzeLayers - 1 && state.gauzeSaturation > 0.02) {
+        const sc = SCENARIOS[state.scenarioId];
+        const rad = 18 + state.gauzeSaturation * 88;
+        const stain = ctx.createRadialGradient(0, 0, 6, 0, 0, rad);
+        const colCore = sc.hasArterial ? 'rgba(205, 16, 30, 0.94)' : 'rgba(98, 8, 26, 0.94)';
+        const colMid = sc.hasArterial ? 'rgba(225, 36, 48, 0.72)' : 'rgba(120, 16, 36, 0.72)';
+        stain.addColorStop(0, colCore);
+        stain.addColorStop(0.65, colMid);
+        stain.addColorStop(1, 'rgba(220, 38, 38, 0)');
+        ctx.fillStyle = stain;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rad * 1.15, rad * 0.82, 0.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function drawPersonalBandage() {
+    ctx.save();
+    ctx.translate(WOUND_X, WOUND_Y);
+
+    // Olive-drab elastic wraps circling forearm
+    const wraps = [-54, -18, 18, 54];
+    for (const wx of wraps) {
+      const bGrad = ctx.createLinearGradient(0, -108, 0, 108);
+      bGrad.addColorStop(0, '#505c44');
+      bGrad.addColorStop(0.25, '#7c8b6a');
+      bGrad.addColorStop(0.55, '#8c9c78');
+      bGrad.addColorStop(0.85, '#647255');
+      bGrad.addColorStop(1, '#3e4735');
+      ctx.fillStyle = bGrad;
+      ctx.beginPath();
+      ctx.roundRect(wx - 22, -102, 44, 206, 7);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(30, 38, 25, 0.45)';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+
+    // Israeli bandage pressure bar on center
+    ctx.fillStyle = '#e5e7eb';
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(-24, -18, 48, 36, 6);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#334155';
+    ctx.font = 'bold 9.5px "Segoe UI", Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('תחבושת', 0, -2);
+    ctx.fillText('אישית', 0, 10);
+
+    // Breakthrough arterial soak stain if arterial bleed still active!
+    if (state.arterialBleedRate > 1.0) {
+      const soak = Math.min(0.85, 0.25 + (state.gauzeSaturation * 0.65));
+      const sGrad = ctx.createRadialGradient(0, 0, 8, 0, 0, 64);
+      sGrad.addColorStop(0, `rgba(220, 18, 32, ${soak})`);
+      sGrad.addColorStop(1, 'rgba(220, 18, 32, 0)');
+      ctx.fillStyle = sGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, 64, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawCatTourniquet() {
+    ctx.save();
+    const x = state.catX;
+    const pinch = state.catWindlassTurns * 3.5; // Visible tissue compression!
+    const topY = 152 + pinch;
+    const botY = 368 - pinch;
+    const h = botY - topY;
+
+    // Strap shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.48)';
+    ctx.beginPath();
+    ctx.roundRect(x - 24, topY + 2, 52, h + 4, 8);
+    ctx.fill();
+
+    // Black tactical nylon CAT band
+    const bandGrad = ctx.createLinearGradient(0, topY, 0, botY);
+    bandGrad.addColorStop(0, '#111827');
+    bandGrad.addColorStop(0.35, '#27303f');
+    bandGrad.addColorStop(0.7, '#1f2937');
+    bandGrad.addColorStop(1, '#0b0f19');
+    ctx.fillStyle = bandGrad;
+    ctx.beginPath();
+    ctx.roundRect(x - 22, topY, 44, h, 7);
+    ctx.fill();
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    // Red Omni-Tape Tip sticking out bottom
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.roundRect(x - 14, botY - 8, 28, 22, 4);
+    ctx.fill();
+
+    // White TIME Strap
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath();
+    ctx.roundRect(x - 19, topY + 14, 38, 26, 3);
+    ctx.fill();
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 8.5px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('TIME', x, topY + 24);
+    ctx.fillStyle = state.catTimeStamped ? '#059669' : '#dc2626';
+    ctx.font = 'bold 9.5px Arial';
+    ctx.fillText(state.catTimeStamped || '--:--', x, topY + 35);
+
+    // Windlass Clip & Rotating Rod
+    ctx.fillStyle = '#334155';
+    ctx.beginPath();
+    ctx.roundRect(x - 17, 232, 34, 58, 5);
+    ctx.fill();
+    ctx.strokeStyle = '#64748b';
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(x, 261);
+    ctx.rotate(state.catWindlassTurns * 0.92 + 0.35);
+    const rodGrad = ctx.createLinearGradient(-7, -38, 7, 38);
+    rodGrad.addColorStop(0, '#64748b');
+    rodGrad.addColorStop(0.5, '#0f172a');
+    rodGrad.addColorStop(1, '#475569');
+    ctx.fillStyle = rodGrad;
+    ctx.beginPath();
+    ctx.roundRect(-5.5, -38, 11, 76, 5);
+    ctx.fill();
+    ctx.strokeStyle = state.catWindlassTurns === 3 ? '#10b981' : '#f59e0b';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  function drawTriangularSling() {
+    ctx.save();
+    // Clean off-white cotton triangular sling cradling the forearm from below
+    const slingGrad = ctx.createLinearGradient(0, 295, 0, 415);
+    slingGrad.addColorStop(0, '#f1f5f9');
+    slingGrad.addColorStop(0.5, '#e2e8f0');
+    slingGrad.addColorStop(1, '#cbd5e1');
+
+    // Neck straps going upward off-screen
+    ctx.strokeStyle = 'rgba(226, 232, 240, 0.78)';
+    ctx.lineWidth = 16;
+    ctx.beginPath();
+    ctx.moveTo(220, 325); ctx.lineTo(310, 40);
+    ctx.moveTo(645, 360); ctx.lineTo(540, 40);
+    ctx.stroke();
+
+    // Forearm cradle pocket
+    ctx.fillStyle = slingGrad;
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(195, 304);
+    ctx.quadraticCurveTo(435, 336, 680, 344);
+    ctx.lineTo(665, 392);
+    ctx.quadraticCurveTo(430, 412, 205, 352);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#1e293b';
+    ctx.font = 'bold 11px "Segoe UI", Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('מתלה משולש בד — קיבוע והגבהה ✓', 436, 366);
+    ctx.restore();
+  }
+
+  function drawDirectPressureHands() {
+    ctx.save();
+    ctx.translate(WOUND_X, WOUND_Y);
+    ctx.globalAlpha = Math.min(0.92, state.pressureStrength);
+
+    // Animated pressure compression rings
+    const ringR = 54 + Math.sin(animTime * 7) * 6;
+    ctx.strokeStyle = state.glovesOn ? 'rgba(56, 189, 248, 0.75)' : 'rgba(239, 68, 68, 0.85)';
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.arc(0, 0, ringR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Stylized Medical Nitrile Gloved Palm pressing directly down
+    const palmColor = state.glovesOn ? '#38bdf8' : '#e5b293';
+    const palmStroke = state.glovesOn ? '#0284c7' : '#b45309';
+
+    ctx.fillStyle = palmColor;
+    ctx.strokeStyle = palmStroke;
+    ctx.lineWidth = 2;
+
+    // Heel of hand & fingers pressing firmly
+    ctx.beginPath();
+    ctx.roundRect(-48, -32, 96, 62, 22);
+    ctx.fill();
+    ctx.stroke();
+
+    // Finger ridges
+    for (let i = -1.5; i <= 1.5; i++) {
+      ctx.beginPath();
+      ctx.roundRect(i * 21 - 8.5, -56, 17, 36, 8);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = state.glovesOn ? '#082f49' : '#450a0a';
+    ctx.font = 'bold 11.5px "Segoe UI", Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(state.glovesOn ? 'לחץ ישיר' : 'ללא כפפות!', 0, 2);
+    ctx.restore();
+  }
+
+  function drawLayerHighlight(layerId) {
+    ctx.save();
+    ctx.translate(WOUND_X, WOUND_Y);
+    ctx.rotate(-0.085);
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#38bdf8';
+    ctx.shadowBlur = 12;
+
+    if (layerId === 'epidermis') {
+      traceWoundPath(ctx, 118, 67);
+      ctx.stroke();
+    } else if (layerId === 'dermis') {
+      traceWoundPath(ctx, 112, 61);
+      ctx.stroke();
+    } else if (layerId === 'fat') {
+      traceWoundPath(ctx, 102, 52);
+      ctx.stroke();
+    } else if (layerId === 'muscle') {
+      traceWoundPath(ctx, 86, 40);
+      ctx.stroke();
+    } else if (layerId === 'artery') {
+      ctx.beginPath();
+      ctx.roundRect(-84, -30, 168, 19, 9);
+      ctx.stroke();
+    } else if (layerId === 'vein') {
+      ctx.beginPath();
+      ctx.roundRect(-84, 15, 168, 19, 9);
+      ctx.stroke();
+    } else if (layerId === 'tendon') {
+      ctx.beginPath();
+      ctx.roundRect(-84, -8, 168, 25, 8);
+      ctx.stroke();
+    } else if (layerId === 'capillaries') {
+      ctx.beginPath();
+      ctx.arc(42, -48, 20, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawAnatomyCallouts() {
+    // 8 crisp non-overlapping leader pins (4 top framed around the arterial spray arc, 4 bottom)
+    const pins = [
+      { id: 'epidermis', label: 'אפידרמיס', tx: 332, ty: 222, lx: 155, ly: 96 },
+      { id: 'dermis',    label: 'דרמיס',     tx: 378, ty: 205, lx: 278, ly: 82 },
+      { id: 'artery',    label: 'עורק פועם', tx: 432, ty: 241, lx: 560, ly: 82 },
+      { id: 'capillaries', label: 'נימים',   tx: 478, ty: 210, lx: 695, ly: 96 },
+
+      { id: 'fat',       label: 'רקמת שומן', tx: 365, ty: 306, lx: 185, ly: 436 },
+      { id: 'muscle',    label: 'שרירים',    tx: 408, ty: 294, lx: 345, ly: 436 },
+      { id: 'tendon',    label: 'גידים לבנים', tx: 446, ty: 268, lx: 505, ly: 436 },
+      { id: 'vein',      label: 'וריד',      tx: 482, ty: 284, lx: 660, ly: 436 }
+    ];
+
+    ctx.save();
+    for (const p of pins) {
+      const active = state.hoveredLayer === p.id || state.selectedLayer === p.id;
+      const color = ANATOMY_DATA[p.id].color;
+
+      // Leader line
+      ctx.strokeStyle = active ? '#38bdf8' : 'rgba(203, 213, 225, 0.52)';
+      ctx.lineWidth = active ? 2 : 1.15;
+      ctx.beginPath();
+      ctx.moveTo(p.lx, p.ly + (p.ly < 250 ? 12 : -12));
+      ctx.lineTo(p.tx, p.ty);
+      ctx.stroke();
+
+      // Anchor dot
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(p.tx, p.ty, active ? 4.5 : 3.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Pill badge
+      ctx.font = 'bold 11.5px "Segoe UI", Arial';
+      const tw = ctx.measureText(p.label).width;
+      const pw = tw + 24;
+      const ph = 24;
+
+      ctx.fillStyle = active ? 'rgba(14, 116, 144, 0.96)' : 'rgba(11, 18, 34, 0.88)';
+      ctx.strokeStyle = active ? '#7dd3fc' : 'rgba(148, 163, 184, 0.42)';
+      ctx.lineWidth = active ? 1.8 : 1;
+      ctx.beginPath();
+      ctx.roundRect(p.lx - pw / 2, p.ly - ph / 2, pw, ph, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      // Color swatch dot
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(p.lx + pw / 2 - 10, p.ly, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(p.label, p.lx - 4, p.ly + 0.5);
+    }
+    ctx.restore();
+  }
+
+  /* =========================================================
+     12. LIVE ECG WAVEFORM RENDERER
+     ========================================================= */
+  function initEcgBuffer() {
+    ecgBuffer = new Array(220).fill(0);
+  }
+
+  function renderEcg() {
+    const w = ecgCanvas.width;
+    const h = ecgCanvas.height;
+    ecgCtx.clearRect(0, 0, w, h);
+
+    // Subtle oscilloscope grid
+    ecgCtx.strokeStyle = 'rgba(16, 185, 129, 0.1)';
+    ecgCtx.lineWidth = 1;
+    for (let x = 0; x < w; x += 22) {
+      ecgCtx.beginPath(); ecgCtx.moveTo(x, 0); ecgCtx.lineTo(x, h); ecgCtx.stroke();
+    }
+    ecgCtx.beginPath(); ecgCtx.moveTo(0, h * 0.65); ecgCtx.lineTo(w, h * 0.65); ecgCtx.stroke();
+
+    // Waveform color reflects HR/shock severity
+    const lossPct = (state.bloodLostMl / TOTAL_BLOOD_VOLUME) * 100;
+    const waveColor = lossPct >= 35 ? '#ef4444' : lossPct >= 20 ? '#f59e0b' : '#10b981';
+
+    ecgCtx.strokeStyle = waveColor;
+    ecgCtx.lineWidth = 2;
+    ecgCtx.shadowColor = waveColor;
+    ecgCtx.shadowBlur = 6;
+    ecgCtx.beginPath();
+
+    const len = ecgBuffer.length;
+    for (let i = 0; i < len; i++) {
+      const x = (i / (len - 1)) * w;
+      const y = h * 0.68 - ecgBuffer[i] * (h * 0.54);
+      if (i === 0) ecgCtx.moveTo(x, y);
+      else ecgCtx.lineTo(x, y);
+    }
+    ecgCtx.stroke();
+    ecgCtx.shadowBlur = 0;
+  }
+
+  /* =========================================================
+     13. CANVAS MOUSE / TOUCH INTERACTION
+     ========================================================= */
+  let pointerDownPos = null;
+  let holdPressTimer = null;
+  let ignoreNextPointerUp = false;
+
+  canvas.addEventListener('pointerdown', (e) => {
+    if (state.finished) return;
+    const pt = screenToForearmLocal(e.clientX, e.clientY);
+    pointerDownPos = { x: e.clientX, y: e.clientY, fx: pt.x, fy: pt.y };
+
+    // Mode A: CAT Tourniquet Placement Click
+    if (state.catMode && !state.catPlaced) {
+      ignoreNextPointerUp = true;
+      handleCatPlacementClick(pt.x, pt.y);
+      return;
+    }
+
+    // Check if clicking inside wound region -> allow click-and-hold Direct Pressure OR quick-click to Inspect Anatomy
+    const distWound = Math.hypot((pt.x - WOUND_X) / 1.4, pt.y - WOUND_Y);
+    if (distWound < 88) {
+      holdPressTimer = setTimeout(() => {
+        checkGlovesSafety('הפעלת לחץ ישיר על הפצע');
+        state.canvasPressing = true;
+        if (state.firstPressureTimeSec === null) state.firstPressureTimeSec = state.elapsedSec;
+        updateToolkitUI();
+      }, 170);
+    }
+  });
+
+  canvas.addEventListener('pointerup', (e) => {
+    if (holdPressTimer) {
+      clearTimeout(holdPressTimer);
+      holdPressTimer = null;
+    }
+    if (ignoreNextPointerUp) {
+      ignoreNextPointerUp = false;
+      pointerDownPos = null;
+      return;
+    }
+    const wasPressing = state.canvasPressing;
+    state.canvasPressing = false;
+    if (wasPressing) {
+      updateToolkitUI();
+      return;
+    }
+
+    if (!pointerDownPos || state.catMode) return;
+    const moved = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+    if (moved < 10) {
+      const pt = screenToForearmLocal(e.clientX, e.clientY);
+      // Check if user clicked on one of the 8 floating anatomy label pills first
+      const clickedPin = hitTestCalloutPill(pt.x, pt.y);
+      if (clickedPin) {
+        inspectLayer(clickedPin);
+        return;
+      }
+      // Otherwise hit-test the anatomical layer directly
+      const layer = hitTestAnatomicalLayer(pt.x, pt.y);
+      if (layer) {
+        inspectLayer(layer);
+      }
+    }
+    pointerDownPos = null;
+  });
+
+  canvas.addEventListener('pointerleave', () => {
+    if (holdPressTimer) clearTimeout(holdPressTimer);
+    state.canvasPressing = false;
+    state.hoveredLayer = null;
+    document.getElementById('anatomyTooltip').style.display = 'none';
+  });
+
+  canvas.addEventListener('pointermove', (e) => {
+    const pt = screenToForearmLocal(e.clientX, e.clientY);
+    const tip = document.getElementById('anatomyTooltip');
+
+    if (state.catMode && !state.catPlaced) {
+      canvas.style.cursor = 'crosshair';
+      tip.style.display = 'none';
+      return;
+    }
+
+    const pinId = state.showLabels && !state.personalBandageOn ? hitTestCalloutPill(pt.x, pt.y) : null;
+    const layer = pinId || hitTestAnatomicalLayer(pt.x, pt.y);
+    state.hoveredLayer = layer;
+
+    if (layer && !state.personalBandageOn) {
+      canvas.style.cursor = 'pointer';
+      const rect = canvas.parentElement.getBoundingClientRect();
+      tip.textContent = `${ANATOMY_DATA[layer].name} — לחץ להסבר`;
+      tip.style.display = 'block';
+      tip.style.left = Math.min(rect.width - 210, Math.max(10, e.clientX - rect.left + 12)) + 'px';
+      tip.style.top = Math.max(10, e.clientY - rect.top - 34) + 'px';
+    } else {
+      canvas.style.cursor = 'default';
+      tip.style.display = 'none';
+    }
+  });
+
+  function hitTestCalloutPill(fx, fy) {
+    if (!state.showLabels || state.personalBandageOn) return null;
+    const boxes = [
+      { id: 'epidermis', lx: 155, ly: 96 },
+      { id: 'dermis', lx: 278, ly: 82 },
+      { id: 'artery', lx: 560, ly: 82 },
+      { id: 'capillaries', lx: 695, ly: 96 },
+      { id: 'fat', lx: 185, ly: 436 },
+      { id: 'muscle', lx: 345, ly: 436 },
+      { id: 'tendon', lx: 505, ly: 436 },
+      { id: 'vein', lx: 660, ly: 436 }
+    ];
+    for (const b of boxes) {
+      if (Math.abs(fx - b.lx) < 52 && Math.abs(fy - b.ly) < 16) return b.id;
+    }
+    return null;
+  }
+
+  /* =========================================================
+     14. LIVE VITALS UI & CONTEXTUAL "למה זה קורה?" EXPLANATIONS
+     ========================================================= */
+  function getAvpuLabel(avpu) {
+    const map = {
+      A: 'A — ערני ומדבר',
+      V: 'V — מגיב לקול בלבד',
+      P: 'P — מגיב לכאב בלבד',
+      U: 'U — מחוסר הכרה!'
+    };
+    return map[avpu] || avpu;
+  }
+
+  function updateVitalsUI() {
+    const hr = Math.round(state.hr);
+    const rr = Math.round(state.rr);
+    const sbp = Math.round(state.sbp);
+    const dbp = Math.round(state.dbp);
+    const lossMl = Math.round(state.bloodLostMl);
+    const lossPct = Math.min(100, (state.bloodLostMl / TOTAL_BLOOD_VOLUME) * 100);
+
+    document.getElementById('simClock').textContent = formatClock(state.elapsedSec);
+    document.getElementById('bloodLostVal').textContent = `${lossMl} מ"ל (${lossPct.toFixed(1)}%)`;
+    document.getElementById('lossBarFill').style.width = `${Math.min(100, lossPct * 2)}%`;
+
+    // Shock stage badge
+    const badge = document.getElementById('shockBadge');
+    if (lossPct < 5) {
+      badge.textContent = 'יציב'; badge.className = 'shock-badge';
+    } else if (lossPct < 15) {
+      badge.textContent = 'הלם שלב I (מפוצה)'; badge.className = 'shock-badge stage1';
+    } else if (lossPct < 30) {
+      badge.textContent = 'הלם שלב II'; badge.className = 'shock-badge stage2';
+    } else if (lossPct < 40) {
+      badge.textContent = 'הלם שלב III (חמור)'; badge.className = 'shock-badge stage3';
+    } else {
+      badge.textContent = 'הלם שלב IV — סכנת חיים!'; badge.className = 'shock-badge stage4';
+    }
+
+    // Bleed status pill on canvas
+    const pill = document.getElementById('bleedStatusPill');
+    const pillText = document.getElementById('bleedStatusText');
+    const sc = SCENARIOS[state.scenarioId];
+    if (isBleedingStopped()) {
+      pill.className = 'bleed-status-pill controlled';
+      pillText.textContent = 'הדימום נעצר בהצלחה ✓';
+    } else if (state.currentBleedRateMlSec < (sc.baseArterialRate + sc.baseVenousRate) * 0.45) {
+      pill.className = 'bleed-status-pill slowing';
+      pillText.textContent = `דימום מואט (~${state.currentBleedRateMlSec.toFixed(1)} מ"ל/שנ')`;
+    } else {
+      pill.className = 'bleed-status-pill active-bleed';
+      const lbl = sc.hasArterial && sc.hasVenous ? 'דימום משולב פעיל' : (sc.hasArterial ? 'דימום עורקי פורץ' : 'דימום ורידי רציף');
+      pillText.textContent = `${lbl} (~${state.currentBleedRateMlSec.toFixed(1)} מ"ל/שנ')`;
+    }
+
+    // 1. HR Card & Explanation
+    document.getElementById('val-hr').textContent = hr;
+    const hrCard = document.getElementById('card-hr');
+    const hrWhy = document.getElementById('why-hr');
+    const hrTrend = document.getElementById('trend-hr');
+    const ecgSub = document.getElementById('ecgSubLabel');
+    if (hr < 96) {
+      hrCard.className = 'vital-card';
+      hrTrend.textContent = '';
+      ecgSub.textContent = 'קצב סינוס תקין';
+      hrWhy.textContent = isBleedingStopped()
+        ? 'הדימום נעצר והדופק שומר על טווח תקין ויציב.'
+        : 'הדופק בטווח התקין (60–100), אך מתחיל לטפס בהדרגה עקב סטרס ואיבוד הדם.';
+    } else if (hr < 122) {
+      hrCard.className = 'vital-card warn';
+      hrTrend.textContent = '▲'; hrTrend.style.color = '#f59e0b';
+      ecgSub.textContent = 'טכיקרדיה מפצה (דופק מהיר)';
+      hrWhy.textContent = 'מנגנון פיצוי! הלב מאיץ את קצב הפעימות כדי לשמור על זרימת דם למוח למרות ירידת נפח הדם.';
+    } else {
+      hrCard.className = 'vital-card crit';
+      hrTrend.textContent = '▲▲'; hrTrend.style.color = '#ef4444';
+      ecgSub.textContent = 'טכיקרדיה חמורה — הלם!';
+      hrWhy.textContent = 'דופק מהיר וחלש (חוטי)! הלב עובד במאמץ קיצוני בגלל מחסור חמור בנפח דם (הלם היפוולמי).';
+    }
+
+    // 2. RR Card & Explanation
+    document.getElementById('val-rr').textContent = rr;
+    const rrCard = document.getElementById('card-rr');
+    const rrWhy = document.getElementById('why-rr');
+    const rrTrend = document.getElementById('trend-rr');
+    if (rr <= 20) {
+      rrCard.className = 'vital-card';
+      rrTrend.textContent = '';
+      rrWhy.textContent = 'קצב נשימה תקין (12–20 במבוגר) — אספקת החמצן מספקת כעת.';
+    } else if (rr <= 28) {
+      rrCard.className = 'vital-card warn';
+      rrTrend.textContent = '▲'; rrTrend.style.color = '#f59e0b';
+      rrWhy.textContent = 'טכיפנאה (נשימה מהירה): איבוד תאי דם אדומים מוריד את כמות החמצן בגוף, ולכן הריאות מאיצות נשימה.';
+    } else {
+      rrCard.className = 'vital-card crit';
+      rrTrend.textContent = '▲▲'; rrTrend.style.color = '#ef4444';
+      rrWhy.textContent = 'נשימה מהירה ושטחית מאוד! הגוף נמצא במצוקת חמצן קשה וחמצת עקב הלם מתקדם.';
+    }
+
+    // 3. BP Card & Explanation
+    document.getElementById('val-bp').textContent = `${sbp}/${dbp}`;
+    const bpCard = document.getElementById('card-bp');
+    const bpWhy = document.getElementById('why-bp');
+    const bpTrend = document.getElementById('trend-bp');
+    if (sbp >= 112) {
+      bpCard.className = 'vital-card';
+      bpTrend.textContent = '';
+      bpWhy.textContent = lossPct > 8
+        ? 'כיווץ כלי דם היקפיים עדיין שומר על לחץ הדם תקין (הלם מפוצה) — אל תטעה לחשוב שהפצוע לא בהלם!'
+        : 'לחץ דם תקין — נפח הדם שומר על זילוח תקין לכל האיברים.';
+    } else if (sbp >= 95) {
+      bpCard.className = 'vital-card warn';
+      bpTrend.textContent = '▼'; bpTrend.style.color = '#f59e0b';
+      bpWhy.textContent = 'לחץ הדם מתחיל לרדת ולחץ הדופק מצטמצם — מנגנוני הפיצוי של הגוף קרובים למיצוי!';
+    } else {
+      bpCard.className = 'vital-card crit';
+      bpTrend.textContent = '▼▼'; bpTrend.style.color = '#ef4444';
+      bpWhy.textContent = 'ירידה קריטית בלחץ הדם (הלם לא מפוצה)! אין מספיק נפח דם לשמור על זילוח למוח וללב.';
+    }
+
+    // 4. AVPU Card & Patient Quote
+    document.getElementById('val-avpu').textContent = getAvpuLabel(state.avpu);
+    const avpuCard = document.getElementById('card-avpu');
+    const avpuWhy = document.getElementById('why-avpu');
+    ['A', 'V', 'P', 'U'].forEach(l => {
+      const el = document.getElementById(`avpu-${l}`);
+      el.className = 'avpu-pill' + (state.avpu === l ? ` active-${l}` : '');
+    });
+
+    const quoteEl = document.getElementById('patientQuote');
+    const emojiEl = document.getElementById('patientEmoji');
+
+    if (state.avpu === 'A') {
+      avpuCard.className = 'vital-card';
+      avpuWhy.textContent = 'אספקת החמצן למוח תקינה — הפצוע ערני ומדבר (מה שגם מאשר ש-A ו-B פתוחים!).';
+      emojiEl.textContent = isBleedingStopped() ? '😌' : '😰';
+      quoteEl.textContent = isBleedingStopped()
+        ? '"תודה... אני מרגיש קצת יותר רגוע עכשיו שהדם נעצר."'
+        : sc.initialQuote;
+    } else if (state.avpu === 'V') {
+      avpuCard.className = 'vital-card warn';
+      avpuWhy.textContent = 'ירידה בזילוח הדם למוח (היפוקסיה מוחית) גורמת לסחרחורת, בלבול וישנוניות — מגיב רק כשפונים אליו.';
+      emojiEl.textContent = '😵‍💫';
+      quoteEl.textContent = '"הראש שלי מסתובב... נהיה לי קר וחשוך בעיניים..."';
+    } else if (state.avpu === 'P') {
+      avpuCard.className = 'vital-card crit';
+      avpuWhy.textContent = 'מחסור חמור בחמצן למוח! הפצוע אינו מגיב לקול אלא לגירוי כאב בלבד — סכנה מיידית לחייו.';
+      emojiEl.textContent = '😖';
+      quoteEl.textContent = '"...אחחח... (נאנח חלש רק למגע, אינו עונה לשאלות)"';
+    } else {
+      avpuCard.className = 'vital-card crit';
+      avpuWhy.textContent = 'חוסר הכרה מלא עקב תת-זילוח מוחי קיצוני! הפצוע בסכנת דום לב וחסימת נתיב אוויר מיידית!';
+      emojiEl.textContent = '🚨';
+      quoteEl.textContent = '(ללא תגובה לקול ולכאב — מחוסר הכרה!)';
+    }
+
+    // Physical skin signs
+    const skinEl = document.getElementById('skinSignText');
+    const capEl = document.getElementById('capRefillText');
+    if (lossPct < 12) {
+      skinEl.textContent = 'חם וורוד'; capEl.textContent = '< 2 שנ\'';
+    } else if (lossPct < 25) {
+      skinEl.textContent = 'חיוור וקריר'; capEl.textContent = '2–3 שנ\'';
+    } else if (lossPct < 38) {
+      skinEl.textContent = 'חיוור, קר ולח (זיעה קרה)'; capEl.textContent = '> 3 שנ\'';
+    } else {
+      skinEl.textContent = 'אפרפר-כחלחל וקר מאוד'; capEl.textContent = '> 4 שנ\' (קריטי)';
+    }
+
+    // Pressure meter bar
+    const pWrap = document.getElementById('pressureBarWrap');
+    const pFill = document.getElementById('pressureBarFill');
+    pWrap.classList.toggle('visible', state.pressureStrength > 0.04);
+    pFill.style.width = `${Math.round(state.pressureStrength * 100)}%`;
+
+    // MDA ETA badge
+    const mdaBadge = document.getElementById('mdaBadge');
+    const stMda = document.getElementById('st-mda');
+    if (state.mdaArrived) {
+      mdaBadge.textContent = '🚑 מד"א הגיע!';
+      mdaBadge.style.color = '#6ee7b7';
+      stMda.style.display = 'inline-block';
+      stMda.textContent = 'הגיע ✓';
+    } else if (state.mdaCalled) {
+      mdaBadge.textContent = `🚑 מד"א בעוד ${formatClock(state.mdaEtaSec)}`;
+      mdaBadge.style.color = '#fca5a5';
+      stMda.style.display = 'inline-block';
+      stMda.textContent = formatClock(state.mdaEtaSec);
+    } else {
+      mdaBadge.textContent = 'מד"א לא הוזעק';
+      mdaBadge.style.color = '#7dd3fc';
+      stMda.style.display = 'none';
+    }
+  }
+
+  /* =========================================================
+     15. TOOLKIT BUTTON STATES & SABCDE GUIDED LEARNING ENGINE
+     ========================================================= */
+  function updateToolkitUI() {
+    const toggleSt = (id, show, txt) => {
+      const el = document.getElementById(id);
+      el.style.display = show ? 'inline-block' : 'none';
+      if (txt !== undefined) el.textContent = txt;
+    };
+
+    document.getElementById('tool-gloves').classList.toggle('active', state.glovesOn);
+    toggleSt('st-gloves', state.glovesOn, 'הולבש ✓');
+
+    document.getElementById('tool-gauze').classList.toggle('active', state.gauzeLayers > 0);
+    toggleSt('st-gauze', state.gauzeLayers > 0, state.gauzeSaturation > 0.8 ? `ספוג! (${state.gauzeLayers})` : `${state.gauzeLayers} שכבות`);
+
+    document.getElementById('tool-bandage').classList.toggle('active', state.personalBandageOn);
+    toggleSt('st-bandage', state.personalBandageOn, 'נחבש ✓');
+
+    document.getElementById('tool-cat').classList.toggle('active', state.catPlaced && state.catWindlassTurns === 3);
+    document.getElementById('tool-cat').classList.toggle('selected-mode', state.catMode);
+    toggleSt('st-cat', state.catPlaced, state.catWindlassTurns === 3 ? (state.catTimeStamped ? 'מהודק ✓' : 'רשום שעה!') : `הידוק ${state.catWindlassTurns}/3`);
+
+    document.getElementById('tool-triangle').classList.toggle('active', state.triangleOn);
+    toggleSt('st-triangle', state.triangleOn, 'מקובע ✓');
+
+    document.getElementById('tool-pressure').classList.toggle('active', isDirectPressureActive());
+    toggleSt('st-pressure', isDirectPressureActive(), 'מופעל');
+
+    document.getElementById('tool-elevate').classList.toggle('active', state.elevated);
+    toggleSt('st-elevate', state.elevated, 'מורמת ↑');
+
+    document.getElementById('tool-mda').classList.toggle('active', state.mdaCalled);
+  }
+
+  function updateGuidance() {
+    // Remove all previous recommendation highlights
+    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('recommended'));
+    const gBox = document.getElementById('guidanceBox');
+    const gText = document.getElementById('guidanceText');
+    const pills = document.querySelectorAll('.s-pill');
+
+    if (state.mode === 'practice') {
+      gBox.classList.add('practice-mode');
+      gText.innerHTML = '<strong>מצב תרגול עצמאי:</strong> פעל לפי שיקול דעתך וכללי מע"ר (SABCDE). כל פעולה מתועדת — כשתסיים לייצב את הפצוע (או עם הגעת מד"א) תקבל תחקיר רפואי מפורט.';
+      pills.forEach(p => { p.className = 's-pill'; });
+      return;
+    }
+
+    gBox.classList.remove('practice-mode');
+    const sc = SCENARIOS[state.scenarioId];
+
+    // Determine exact guided step for beginners
+    let stepLetter = 'S';
+    let doneSteps = [];
+    let recTool = null;
+    let html = '';
+
+    if (!state.glovesOn) {
+      stepLetter = 'S';
+      recTool = 'tool-gloves';
+      html = '<strong>שלב S (בטיחות):</strong> הזירה בטוחה — כעת לבש <strong>כפפות חד-פעמיות</strong> לפני כל מגע בדם הפצוע! (במקביל תוכל ללחוץ על השכבות באמה כדי ללמוד אנטומיה).';
+    } else if (!state.mdaCalled) {
+      stepLetter = 'S';
+      recTool = 'tool-mda';
+      html = '<strong>שלב S (הזעקת עזרה מוקדמת):</strong> מדובר בפציעה עמוקה ומדממת — התקשר עכשיו ל<strong>מד"א 101</strong> כדי להזניק ניידת מוקדם ככל האפשר!';
+    } else if (state.gauzeLayers === 0) {
+      stepLetter = 'C';
+      doneSteps = ['S', 'A', 'B'];
+      recTool = 'tool-gauze';
+      html = sc.hasArterial
+        ? '<strong>שלב C (עדיפות עליונה — דימום פורץ!):</strong> הפצוע מדבר (A ו-B פתוחים), אך הדם מתיז מהעורק! הנח מיד <strong>גזה סטרילית</strong> על הפצע.'
+        : '<strong>שלב C (עצירת דימום ורידי):</strong> הפצוע מדבר (סימן ש-A ו-B תקינים). הנח <strong>גזה סטרילית</strong> ישירות על הפצע.';
+    } else if (!isDirectPressureActive() && !state.personalBandageOn && !isBleedingStopped()) {
+      stepLetter = 'C';
+      doneSteps = ['S', 'A', 'B'];
+      recTool = 'tool-pressure';
+      html = '<strong>שלב C (לחץ ישיר):</strong> הפעל מיד <strong>לחץ ישיר חזק</strong> (באמצעות הכפתור או לחיצה ממושכת על הפצע בציור) כדי לבלום את זרימת הדם!';
+    } else if (sc.needsTourniquet && !state.catPlaced) {
+      stepLetter = 'C';
+      doneSteps = ['S', 'A', 'B'];
+      recTool = 'tool-cat';
+      html = '<strong>שלב C (חוסם עורקים CAT):</strong> שים לב! לחץ ישיר האט את הדימום העורקי הפורץ אך לא עצר אותו לגמרי. בחר ב<strong>חוסם עורקים CAT</strong> והנח אותו 5–7 ס"מ מעל הפצע (מימין לפצע, לכיוון המרפק).';
+    } else if (sc.needsTourniquet && state.catPlaced && state.catWindlassTurns < 3) {
+      stepLetter = 'C';
+      doneSteps = ['S', 'A', 'B'];
+      html = '<strong>שלב C (הידוק CAT):</strong> מצוין! כעת לחץ על <strong>"↻ הדק מקל"</strong> בסרגל שמתחת לציור עד סיבוב 3/3 — שים לב איך העורק מפסיק לפעום וההתזה נעצרת!';
+    } else if (sc.needsTourniquet && state.catPlaced && !state.catTimeStamped) {
+      stepLetter = 'C';
+      doneSteps = ['S', 'A', 'B'];
+      html = '<strong>שלב C (רישום שעת הנחה):</strong> הדימום נעצר! חובה ללחוץ על <strong>"🕒 רשום שעת הנחה"</strong> בסרגל ה-CAT כדי שהרופאים יידעו מתי החוסם הונח.';
+    } else if (!sc.needsTourniquet && !state.elevated) {
+      stepLetter = 'C';
+      doneSteps = ['S', 'A', 'B'];
+      recTool = 'tool-elevate';
+      html = '<strong>שלב C (הרמת גפה):</strong> בדימום ורידי, הפעלת <strong>הרמת גפה</strong> מעל גובה הלב מורידה את הלחץ הוורידי ומסייעת לעצירה מהירה של הדם (אין צורך ב-CAT!).';
+    } else if (!state.personalBandageOn) {
+      stepLetter = 'C';
+      doneSteps = ['S', 'A', 'B'];
+      recTool = 'tool-bandage';
+      html = '<strong>שלב C (תחבושת אישית):</strong> חבוש את הפצע ב<strong>תחבושת אישית</strong> כדי לשמור על לחץ קבוע והגנה סטרילית מפני זיהומים.';
+    } else if (!state.triangleOn) {
+      stepLetter = 'E';
+      doneSteps = ['S', 'A', 'B', 'C', 'D'];
+      recTool = 'tool-triangle';
+      html = '<strong>שלב D ו-E (הכרה וקיבוע):</strong> בדוק את רמת ההכרה (AVPU) במוניטור, וקבע את האמה במתלה בעזרת <strong>משולש בד</strong> לשמירת מנוחה והגבהה.';
+    } else {
+      stepLetter = 'E';
+      doneSteps = ['S', 'A', 'B', 'C', 'D', 'E'];
+      html = '<strong>כל הכבוד! הטיפול הראשוני הושלם ✓</strong> עקוב אחר המדדים במוניטור עד הגעת מד"א, או לחץ על "סיים טיפול וקבל תחקיר רפואי" לסיכום מפורט.';
+    }
+
+    gText.innerHTML = html;
+    if (recTool) document.getElementById(recTool).classList.add('recommended');
+
+    pills.forEach(p => {
+      const l = p.dataset.step;
+      if (doneSteps.includes(l)) p.className = 's-pill done';
+      else if (l === stepLetter) p.className = 's-pill current';
+      else p.className = 's-pill';
+    });
+  }
+
+  /* =========================================================
+     16. COMPREHENSIVE MEDICAL DEBRIEF ENGINE
+     ========================================================= */
+  window.openDebrief = function(isCriticalFailure) {
+    state.finished = true;
+    const sc = SCENARIOS[state.scenarioId];
+    const lossMl = Math.round(state.bloodLostMl);
+    const lossPct = ((state.bloodLostMl / TOTAL_BLOOD_VOLUME) * 100).toFixed(1);
+    const stopped = isBleedingStopped();
+
+    // Evaluate clinical criteria with transparent point scoring (total 100)
+    const checks = [];
+    let score = 0;
+
+    // 1. Gloves / Scene Safety (15 pts)
+    if (state.glovesOn && !state.touchedBloodWithoutGloves) {
+      score += 15;
+      checks.push({ status: 'pass', title: 'S — בטיחות המטפל (כפפות)', detail: 'הולבשו כפפות חד-פעמיות לפני כל מגע בדם הפצוע — עמידה מלאה בכללי BSI.' });
+    } else if (state.glovesOn && state.touchedBloodWithoutGloves) {
+      score += 7;
+      checks.push({ status: 'partial', title: 'S — בטיחות המטפל (כפפות)', detail: 'כפפות הולבשו רק לאחר שכבר נוצר מגע בדם הפצוע. זכור: כפפות הן הפעולה הראשונה לפני הטיפול!' });
+    } else {
+      checks.push({ status: 'fail', title: 'S — בטיחות המטפל (כפפות)', detail: 'לא הולבשו כפפות חד-פעמיות! קיימת סכנת חשיפה למחלות המועברות בדם.' });
+    }
+
+    // 2. Calling MDA 101 (15 pts)
+    if (state.mdaCalled && state.mdaCallTimeSec <= 35) {
+      score += 15;
+      checks.push({ status: 'pass', title: 'הזעקת מד"א 101 בזמן', detail: `מד"א הוזעק במהירות (לאחר ${Math.round(state.mdaCallTimeSec)} שנ') עם דיווח על מצב הפצוע.` });
+    } else if (state.mdaCalled) {
+      score += 10;
+      checks.push({ status: 'partial', title: 'הזעקת מד"א 101', detail: `מד"א הוזעק מאוחר יחסית (לאחר ${Math.round(state.mdaCallTimeSec)} שנ'). בפציעה עמוקה חשוב להזניק 101 מיד בתחילת האירוע.` });
+    } else {
+      checks.push({ status: 'fail', title: 'הזעקת מד"א 101', detail: 'לא בוצעה קריאה למוקד 101! טיפול מע"ר נועד לייצב עד הגעת צוות פינוי רפואי.' });
+    }
+
+    // 3. Direct Pressure & Sterile Gauze (20 pts)
+    if (state.gauzeLayers > 0 && state.firstPressureTimeSec !== null) {
+      score += 20;
+      checks.push({ status: 'pass', title: 'C — גזה סטרילית ולחץ ישיר', detail: `הונחו ${state.gauzeLayers} שכבות גזה והופעל לחץ ישיר להאטת איבוד הדם.` });
+    } else if (state.gauzeLayers > 0 || state.firstPressureTimeSec !== null) {
+      score += 12;
+      checks.push({ status: 'partial', title: 'C — גזה סטרילית ולחץ ישיר', detail: 'בוצע רק חלק משילוב גזה סטרילית + לחץ ישיר. שילוב השניים הוא קו ההגנה הראשון.' });
+    } else {
+      checks.push({ status: 'fail', title: 'C — גזה סטרילית ולחץ ישיר', detail: 'לא הופעל לחץ ישיר עם גזה סטרילית על הפצע.' });
+    }
+
+    // 4. Hemorrhage Control Decision (Arterial CAT vs Venous Pressure Dressing) (30 pts)
+    if (sc.needsTourniquet) {
+      if (state.catPlaced && state.catWindlassTurns === 3 && state.catTimeStamped) {
+        score += 30;
+        checks.push({ status: 'pass', title: 'C — חוסם עורקים CAT בדימום עורקי פורץ', detail: `הונח במיקום פרוקסימלי תקין (5–7 ס"מ מעל הפצע), הודק עד עצירה מלאה ונרשמה שעת הנחה (${state.catTimeStamped})!` });
+      } else if (state.catPlaced && state.catWindlassTurns === 3) {
+        score += 24;
+        checks.push({ status: 'partial', title: 'C — חוסם עורקים CAT (חסרה שעת הנחה)', detail: 'חוסם העורקים עצר את הדימום העורקי היטב, אך לא נרשמה שעת ההנחה על התווית!' });
+      } else if (state.catPlaced) {
+        score += 10;
+        checks.push({ status: 'fail', title: 'C — חוסם עורקים CAT לא מהודק מספיק', detail: `החוסם הונח אך הודק רק ל-${state.catWindlassTurns}/3 סיבובים — הדימום העורקי לא נעצר לגמרי.` });
+      } else {
+        checks.push({ status: 'fail', title: 'C — חוסם עורקים CAT חסר', detail: 'בדימום עורקי פורץ שאינו נעצר בלחץ ישיר, חובה להניח חוסם עורקים CAT מעל הפצע!' });
+      }
+    } else {
+      // Venous scenario
+      if (stopped && !state.catPlaced && state.personalBandageOn) {
+        score += 30;
+        checks.push({ status: 'pass', title: 'C — טיפול מדויק בדימום ורידי (ללא CAT מיותר)', detail: 'עצרת את הדימום הוורידי בעזרת לחץ ישיר, גזה ותחבושת אישית — ונמנעת מהנחת חוסם עורקים מיותר!' });
+      } else if (stopped && state.catPlaced) {
+        score += 20;
+        checks.push({ status: 'partial', title: 'C — עצירת דימום ורידי (שימוש יתר ב-CAT)', detail: 'הדימום נעצר, אך בדימום ורידי הניתן לעצירה בלחץ ישיר, הרמת גפה ותחבושת אישית — אין צורך בחוסם עורקים CAT.' });
+      } else if (stopped) {
+        score += 22;
+        checks.push({ status: 'partial', title: 'C — עצירת דימום ורידי', detail: 'הדימום נעצר, אך מומלץ לקבע את הלחץ עם תחבושת אישית.' });
+      } else {
+        checks.push({ status: 'fail', title: 'C — הדימום הוורידי לא נעצר', detail: 'נדרש שילוב של גזה סטרילית, לחץ ישיר יציב, הרמת גפה ותחבושת אישית.' });
+      }
+    }
+
+    // 5. Dressing, Elevation & Triangular Bandage Immobilization (10 pts)
+    let suppPts = 0;
+    if (state.elevated) suppPts += 3;
+    if (state.personalBandageOn) suppPts += 4;
+    if (state.triangleOn) suppPts += 3;
+    score += suppPts;
+    if (suppPts >= 8) {
+      checks.push({ status: 'pass', title: 'E — חבישה, הרמת גפה וקיבוע במשולש בד', detail: 'בוצעו כיסוי סטרילי בתחבושת אישית, הגבהת הגפה וקיבוע נוח במתלה משולש.' });
+    } else if (suppPts >= 4) {
+      checks.push({ status: 'partial', title: 'E — חבישה וקיבוע חלקיים', detail: 'חלק מהפעולות המשלימות (תחבושת אישית, הרמת גפה, משולש בד) לא בוצעו.' });
+    } else {
+      checks.push({ status: 'fail', title: 'E — חסרים חבישה וקיבוע', detail: 'לאחר עצירת דימום חשוב לחבוש בתחבושת אישית, להגביה ולקבע במשולש בד.' });
+    }
+
+    // 6. Clinical Outcome / Blood Loss Preservation (10 pts)
+    if (!isCriticalFailure && state.bloodLostMl < 750 && stopped) {
+      score += 10;
+      checks.push({ status: 'pass', title: 'תוצאה קלינית — מניעת הלם היפוולמי', detail: `איבוד הדם הוגבל ל-${lossMl} מ"ל (${lossPct}%) בלבד והפצוע נשאר יציב וערני!` });
+    } else if (!isCriticalFailure && state.bloodLostMl < 1500 && stopped) {
+      score += 6;
+      checks.push({ status: 'partial', title: 'תוצאה קלינית — הלם קל-בינוני', detail: `הפצוע איבד ${lossMl} מ"ל (${lossPct}%) אך יוצב לפני הידרדרות קריטית.` });
+    } else {
+      checks.push({ status: 'fail', title: 'תוצאה קלינית — איבוד דם מסוכן', detail: `הפצוע איבד ${lossMl} מ"ל (${lossPct}%) והגיע למצב ${getAvpuLabel(state.avpu)}. נדרשת תגובה מהירה יותר לעצירת הדימום.` });
+    }
+
+    if (state.catWrongAttempts > 0) {
+      score = Math.max(0, score - Math.min(8, state.catWrongAttempts * 4));
+      checks.push({ status: 'partial', title: 'דיוק מיקום אנטומי של חוסם CAT', detail: `נרשמו ${state.catWrongAttempts} ניסיונות מיקום שגויים לפני ההנחה הנכונה (זכור: 5–7 ס"מ פרוקסימלית לפצע, לא על מפרק).` });
+    }
+
+    const ringClass = score >= 82 ? '' : score >= 55 ? 'mid' : 'low';
+    const gradeText = isCriticalFailure
+      ? '❌ הפצוע קרס מהלם היפוולמי — נדרש תרגול נוסף'
+      : score >= 88 ? '🏆 ביצוע מע"ר מצטיין!'
+      : score >= 68 ? '✅ ביצוע טוב — שים לב לנקודות לשיפור'
+      : '⚠️ נדרש חיזוק בפרוטוקול עצירת דימומים';
+
+    const iconMap = { pass: '✅', partial: '⚠️', fail: '❌' };
+
+    const timelineHtml = state.actionsLog.slice(-10).map(item =>
+      `<div class="log-item ${item.type}"><span class="log-time">[${item.time}]</span><span>${item.msg} <span style="color:#64748b;">(איבוד: ${item.bloodMl} מ"ל)</span></span></div>`
+    ).join('');
+
+    document.getElementById('debriefContent').innerHTML = `
+      <div class="debrief-hero">
+        <div class="score-ring ${ringClass}">
+          <div class="score-num">${score}</div>
+          <div class="score-sub">מתוך 100</div>
+        </div>
+        <div style="flex:1;min-width:220px;">
+          <div style="font-size:1.08rem;font-weight:800;margin-bottom:4px;">${gradeText}</div>
+          <div style="font-size:0.83rem;color:#cbd5e1;">
+            תרחיש: <strong>${sc.title}</strong> | מצב: <strong>${state.mode === 'learn' ? 'לימוד מונחה' : 'תרגול עצמאי'}</strong>
+          </div>
+          <div style="font-size:0.8rem;color:#94a3b8;margin-top:4px;">
+            ${stopped ? `הדימום נעצר לאחר ${formatClock(state.bleedingStoppedAtSec || state.elapsedSec)}.` : 'הדימום עדיין היה פעיל בסיום הסימולציה.'}
+          </div>
+        </div>
+      </div>
+
+      <div class="debrief-metrics">
+        <div class="d-metric">
+          <div class="d-metric-label">איבוד דם סופי</div>
+          <div class="d-metric-val" style="color:${lossMl > 1200 ? '#fca5a5' : '#6ee7b7'}">${lossMl} מ"ל (${lossPct}%)</div>
+        </div>
+        <div class="d-metric">
+          <div class="d-metric-label">דופק / נשימה</div>
+          <div class="d-metric-val">${Math.round(state.hr)} / ${Math.round(state.rr)}</div>
+        </div>
+        <div class="d-metric">
+          <div class="d-metric-label">לחץ דם סופי</div>
+          <div class="d-metric-val">${Math.round(state.sbp)}/${Math.round(state.dbp)}</div>
+        </div>
+        <div class="d-metric">
+          <div class="d-metric-label">הכרה (AVPU)</div>
+          <div class="d-metric-val">${state.avpu}</div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:0.85rem;font-weight:800;margin-bottom:8px;color:#7dd3fc;">🔍 ניתוח ביצועים לפי פרוטוקול SABCDE</div>
+        <div class="check-list">
+          ${checks.map(c => `
+            <div class="check-row ${c.status}">
+              <div class="check-icon">${iconMap[c.status]}</div>
+              <div>
+                <strong>${c.title}</strong>
+                <div class="check-detail">${c.detail}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="golden-rules">
+        <strong style="color:#7dd3fc;">💡 חוקי זהב למע"ר שחשוב לזכור:</strong>
+        <ul>
+          <li><strong>זיהוי סוג הדימום:</strong> עורקי = אדום בהיר המתיז בפולסים לפי הדופק; ורידי = אדום כהה בזרימה רציפה.</li>
+          <li><strong>ספגה גזה? לא מסירים!</strong> מניחים שכבה נוספת מעליה ולוחצים חזק יותר כדי לא לקרוע קרישי דם שהתחילו להיווצר.</li>
+          <li><strong>חוסם עורקים CAT:</strong> רק בגפיים בדימום פורץ מסכן חיים — 5–7 ס"מ מעל הפצע (לכיוון הלב), לא על מפרק, הידוק עד עצירה מלאה ורישום שעת הנחה!</li>
+          <li><strong>הלם היפוולמי מפוצה:</strong> הדופק והנשימה עולים <em>לפני</em> שלחץ הדם צונח — עקוב תמיד אחרי מגמת הדופק וצבע העור!</li>
+        </ul>
+      </div>
+
+      <div>
+        <div style="font-size:0.8rem;font-weight:700;color:#94a3b8;margin-bottom:5px;">⏱️ ציר זמן פעולות</div>
+        <div class="event-log" style="max-height:130px;">${timelineHtml}</div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="icon-btn" onclick="closeDebrief(); setMode('learn');">🎓 חזור למצב לימוד</button>
+        <button class="icon-btn" onclick="closeDebrief(); changeScenario('${sc.id === 'arterial' ? 'venous' : 'arterial'}');">🔄 נסה תרחיש ${sc.id === 'arterial' ? 'דימום ורידי' : 'דימום עורקי'}</button>
+        <button class="primary-btn" onclick="resetSimulation()">↻ תרגל שוב את התרחיש</button>
+      </div>
+    `;
+
+    document.getElementById('debriefModal').classList.add('open');
+  };
+
+  window.closeDebrief = function() {
+    document.getElementById('debriefModal').classList.remove('open');
+  };
+
+  /* =========================================================
+     17. INITIALIZATION & MAIN ANIMATION LOOP
+     ========================================================= */
+  function buildLayerPills() {
+    const container = document.getElementById('layerPills');
+    const order = ['epidermis', 'dermis', 'capillaries', 'fat', 'muscle', 'tendon', 'vein', 'artery'];
+    container.innerHTML = order.map(id => {
+      const d = ANATOMY_DATA[id];
+      return `<button class="layer-pill" data-layer="${id}" onclick="inspectLayer('${id}')">
+        <span class="layer-swatch" style="background:${d.color}"></span>
+        ${d.name.split(' (')[0]}
+      </button>`;
+    }).join('');
+  }
+
+  let uiTickAccum = 0;
+  function mainLoop(ts) {
+    if (!lastFrameTs) lastFrameTs = ts;
+    const dtReal = Math.min(0.05, (ts - lastFrameTs) / 1000);
+    lastFrameTs = ts;
+    animTime += dtReal;
+
+    stepSimulation(dtReal);
+    renderScene();
+    renderEcg();
+
+    uiTickAccum += dtReal;
+    if (uiTickAccum >= 0.14) {
+      uiTickAccum = 0;
+      updateVitalsUI();
+      updateToolkitUI();
+    }
+
+    requestAnimationFrame(mainLoop);
+  }
+
+  // Boot application
+  buildLayerPills();
+  state = createFreshState('learn', 'arterial');
+  initEcgBuffer();
+  resizeCanvases();
+  document.getElementById('btnSpeed').textContent = `⚡ ×${state.speed}`;
+  addLog('ברוך הבא לסימולטור מע"ר! התחל בשלב S (בטיחות וכפפות) או לחץ על שכבה אנטומית ללמידה.', 'info');
+  updateToolkitUI();
+  updateGuidance();
+  updateVitalsUI();
+  requestAnimationFrame(mainLoop);
+})();
+</script>
+</body>
+</html>
